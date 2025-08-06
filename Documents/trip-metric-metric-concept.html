@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>EV Trip Metric POC</title>
+  </head>
+  <body>
+    <p>To help drivers simply compare how EV models might perform during long-distance highway travel, we've developed a travel-time metric that uses a theoretical scenario to represent three key aspects of EV performance:</p>
+
+<ol class="marker:text-textOff list-decimal pl-8">
+	<li><span>Vehicle range</span></li>
+	<li><span>Fuel efficiency</span></li>
+	<li><span>DC fast charging speed</span></li>
+</ol>
+
+<p><span>Based on these three factors, how long would it take each EV to complete a 1,000-mile highway journey?</span></p>
+
+    <div id="ev-comparison-chart">&nbsp;</div>
+
+    <style>
+      #ev-comparison-chart {
+          max-width: 900px;
+          margin: 0 auto;
+          background-color: white;
+          border-radius: 8px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          padding: 20px;
+          font-family: Arial, sans-serif;
+      }
+    </style>
+
+    <script src="https://www.epa.gov/sites/all/libraries/js/highcharts7/code/highcharts.js"></script>
+    <script src="https://www.epa.gov/sites/all/libraries/js/highcharts7/code/modules/heatmap.js"></script>
+    <script src="https://www.epa.gov/sites/all/libraries/js/highcharts7/code/modules/tilemap.js"></script>
+    <script src="https://www.epa.gov/sites/all/libraries/js/highcharts7/code/modules/exporting.js"></script>
+    <script src="https://www.epa.gov/sites/all/libraries/js/highcharts7/code/modules/export-data.js"></script>
+    <script src="https://www.epa.gov/sites/all/libraries/js/highcharts7/code/modules/accessibility.js"></script>
+    <script src="https://www.epa.gov/sites/all/libraries/js/highcharts7/code/modules/drilldown.js"></script>
+    <script src="https://www.epa.gov/sites/all/libraries/js/highcharts7/code/modules/annotations.js"></script>
+    <script src="https://www.epa.gov/sites/all/libraries/js/highcharts7/code/highcharts-more.js"></script>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+                const vehicles = [
+                    { name: 'Hyundai Ioniq 6', driving: 14.62, charging: 0.85 },
+                    { name: 'Tesla Model Y', driving: 14.62, charging: 1.97 },
+                    { name: 'Volkswagen ID.4', driving: 14.7, charging: 2.23 },
+                    { name: 'Chevy Equinox', driving: 14.7, charging: 2.78 },
+                    { name: 'Ford Mustang Mach-e', driving: 14.62, charging: 2.87 },
+                    { name: 'Volvo EX30', driving: 14.87, charging: 2.97 },
+                    { name: 'Ford F-150 Lightning', driving: 14.87, charging: 3.85 },
+                    { name: 'Toyota bZ4X', driving: 14.87, charging: 4.1 }
+                ];
+
+                vehicles.sort((a, b) => (a.driving + a.charging) - (b.driving + b.charging));
+
+                const categories = vehicles.map(v => v.name);
+                const drivingData = vehicles.map(v => v.driving);
+                const chargingData = vehicles.map(v => v.charging);
+
+                // Helper function to format hours and minutes
+                const formatTime = (time) => {
+                    const hours = Math.floor(time);
+                    const minutes = Math.round((time - hours) * 60);
+                    return `${hours}h ${minutes}m`;
+                };
+
+                // Common data label style configuration
+                const dataLabelConfig = {
+                    enabled: true,
+                    align: 'left',
+                    x: 10,
+                    style: {
+                        fontWeight: 'normal',
+                        color: 'black',
+                        textOutline: 'none'
+                    },
+                    inside: false,
+                    crop: false,
+                    overflow: 'allow'
+                };
+
+                Highcharts.chart('ev-comparison-chart', {
+                    chart: {
+                        type: 'bar',
+                        marginRight: 120,
+                        style: {
+                            fontFamily: 'Arial, sans-serif'
+                        }
+                    },
+                    title: {
+                        text: 'EV Road Trip Comparison Metric',
+                        style: { fontSize: '24px', fontWeight: 'bold' }
+                    },
+                    subtitle: {
+                        text: 'How long does it take each EV to travel 1,000 miles?',
+                        style: { fontSize: '16px' }
+                    },
+                    xAxis: {
+                        categories: categories,
+                        labels: {
+                            style: { fontSize: '14px' }
+                        }
+                    },
+                    yAxis: {
+                        min: 0,
+                        title: {
+                            text: 'Time (hours)',
+                            style: { fontSize: '16px' }
+                        },
+                        labels: {
+                            style: { fontSize: '14px' }
+                        }
+                    },
+                    legend: {
+                        layout: 'horizontal',
+                        align: 'center',
+                        verticalAlign: 'top',
+                        y: 30,
+                        itemStyle: {
+                            fontSize: '14px'
+                        }
+                    },
+                    plotOptions: {
+                        series: {
+                            stacking: 'normal',
+                            events: {
+                                hide: function() {
+                                    this.chart.series.forEach(series => {
+                                        if (series.visible) {
+                                            series.update({
+                                                dataLabels: {
+                                                    ...dataLabelConfig,
+                                                    formatter: function() {
+                                                        return formatTime(this.y);
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    });
+                                },
+                                show: function() {
+                                    const visibleSeries = this.chart.series.filter(s => s.visible);
+                                    if (visibleSeries.length > 1) {
+                                        // If both series are visible, show total time on charging series
+                                        this.chart.series[0].update({
+                                            dataLabels: {
+                                                ...dataLabelConfig,
+                                                formatter: function() {
+                                                    const vehicleIndex = this.point.index;
+                                                    const totalTime = vehicles[vehicleIndex].driving + vehicles[vehicleIndex].charging;
+                                                    return formatTime(totalTime);
+                                                }
+                                            }
+                                        });
+                                        this.chart.series[1].update({
+                                            dataLabels: {
+                                                enabled: false
+                                            }
+                                        });
+                                    } else {
+                                        // If only one series is visible, show its time
+                                        this.update({
+                                            dataLabels: {
+                                                ...dataLabelConfig,
+                                                formatter: function() {
+                                                    return formatTime(this.y);
+                                                }
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    tooltip: {
+                        formatter: function() {
+                            return `<b>${this.point.category}</b><br>${this.series.name}: ${formatTime(this.y)}`;
+                        },
+                        style: { fontSize: '14px' }
+                    },
+                    series: [{
+                        name: 'Charging Time',
+                        data: chargingData,
+                        color: '#D35400',
+                        legendIndex: 1,
+                        dataLabels: {
+                            ...dataLabelConfig,
+                            formatter: function() {
+                                const vehicleIndex = this.point.index;
+                                const totalTime = vehicles[vehicleIndex].driving + vehicles[vehicleIndex].charging;
+                                return formatTime(totalTime);
+                            }
+                        }
+                    }, {
+                        name: 'Driving Time',
+                        data: drivingData,
+                        color: '#2C3E50',
+                        legendIndex: 0,
+                        dataLabels: {
+                            enabled: false
+                        }
+                    }]
+                });
+            });
+    </script>
+  </body>
+</html>

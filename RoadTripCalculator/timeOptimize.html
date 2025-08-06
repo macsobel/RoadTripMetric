@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EV Road Trip Calculator</title>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/highcharts-more.js"></script>
+    <script src="https://code.highcharts.com/modules/annotations.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            padding: 32px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 32px;
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #2d3a4a;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            letter-spacing: 1px;
+        }
+        .main-content {
+            display: flex;
+            gap: 32px;
+            margin-top: 16px;
+        }
+        .controls-panel {
+            flex: 0 0 340px;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 16px rgba(44, 62, 80, 0.08);
+            border: 1px solid #e2e8f0;
+        }
+        .controls-panel h2 {
+            margin-top: 0;
+            margin-bottom: 24px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #2d3a4a;
+            letter-spacing: 0.5px;
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.95rem;
+            letter-spacing: 0.3px;
+        }
+        .input-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            outline: none;
+            appearance: none;
+        }
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+        }
+        .number-input {
+            width: 80px;
+            padding: 8px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-align: center;
+            color: #2d3a4a;
+        }
+        .number-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .btn {
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+        .btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .results-panel {
+            flex: 1;
+            background: #fdfdfd;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 16px rgba(44, 62, 80, 0.05);
+            border: 1px solid #f1f5f9;
+        }
+        .results-panel h2 {
+            margin-top: 0;
+            margin-bottom: 24px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #2d3a4a;
+            letter-spacing: 0.5px;
+        }
+        .summary-section {
+            margin-bottom: 32px;
+        }
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        .summary-table th, .summary-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.95rem;
+        }
+        .summary-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #4a5568;
+            letter-spacing: 0.3px;
+        }
+        .highlight {
+            background: #e6fffa;
+            font-weight: 600;
+            color: #047857;
+        }
+        .chart-container {
+            background: #f8fafc;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(44, 62, 80, 0.04);
+            padding: 18px 10px 10px 10px;
+            margin-bottom: 24px;
+        }
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2d3a4a;
+            letter-spacing: 0.5px;
+            padding-left: 8px;
+        }
+        .section-title {
+            color: #2d3a4a;
+            margin-bottom: 15px;
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+        .charger-positions {
+            font-family: monospace;
+            color: #555;
+            background: #e0eafc;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 1rem;
+            margin-top: 6px;
+        }
+        .hidden {
+            display: none;
+        }
+        .error {
+            color: #e74c3c;
+            background: #fdf2f2;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        @media (max-width: 900px) {
+            .main-content {
+                flex-direction: column;
+            }
+            .controls-panel, .results-panel {
+                width: 100%;
+                min-width: 0;
+                margin-bottom: 20px;
+            }
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 0;
+            }
+            .container {
+                padding: 0;
+                margin: 0;
+                box-shadow: none;
+            }
+            .controls-panel, .results-panel {
+                padding: 12px 6px;
+                border-radius: 0;
+                box-shadow: none;
+            }
+            .chart-title, .section-title {
+                font-size: 1rem;
+            }
+            .summary-table th, .summary-table td {
+                padding: 7px;
+                font-size: 0.95rem;
+            }
+            .charger-positions {
+                padding: 4px;
+                font-size: 0.95rem;
+            }
+            h1 {
+                font-size: 1.3rem;
+                margin-bottom: 18px;
+            }
+        }
+        .compare-charts {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .compare-charts > div {
+            flex: 1 1 350px;
+            min-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚗 EV Road Trip Metric ⚡</h1>
+        <div class="main-content">
+            <!-- Controls Panel -->
+            <div class="controls-panel">
+                <h2>Trip Parameters</h2>
+                <!-- File Upload -->
+                <div class="control-group">
+                    <label for="xmlFile1">Vehicle 1 XML File</label>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <input type="file" id="xmlFile1" accept=".xml" style="margin-top: 5px;">
+                        <button id="clearXml1" type="button" title="Remove Vehicle 1" style="background:none;border:none;font-size:1.2em;cursor:pointer; display:none;">❌</button>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="xmlFile2">Vehicle 2 XML File</label>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <input type="file" id="xmlFile2" accept=".xml" style="margin-top: 5px;" disabled>
+                        <button id="clearXml2" type="button" title="Remove Vehicle 2" style="background:none;border:none;font-size:1.2em;cursor:pointer; display:none;">❌</button>
+                    </div>
+                </div>
+                <!-- Trip Controls -->
+                <div class="control-group">
+                    <label for="drivingDistance" title="How far should the vehicle(s) drive?">Trip Distance (miles)</label>
+                    <div class="input-container">
+                        <input type="range" id="drivingDistanceSlider" class="slider" min="100" max="3000" value="1000" step="50">
+                        <input type="number" id="drivingDistance" class="number-input" value="1000" min="100" max="3000" step="50">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="chargerSpacing" title="How far apart should the charging stations be?">Distance Between Chargers (miles)</label>
+                    <div class="input-container">
+                        <input type="range" id="chargerSpacingSlider" class="slider" min="25" max="150" value="50" step="25">
+                        <input type="number" id="chargerSpacing" class="number-input" value="50" min="25" max="150" step="25">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="chargerDetourDistance" title="How many miles does the vehicle need to drive off the main route to get to a charger (round-trip)?">Charger Detour Distance (miles)</label>
+                    <div class="input-container">
+                        <input type="range" id="chargerDetourDistanceSlider" class="slider" min="1" max="10" value="2.5" step="0.5">
+                        <input type="number" id="chargerDetourDistance" class="number-input" value="2.5" min="1" max="10" step="0.5">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="startSoc" title="What is the charge level of the vehicle when it first departs (%)?">Starting Charge Level (%)</label>
+                    <div class="input-container">
+                        <input type="range" id="startSocSlider" class="slider" min="50" max="100" value="100" step="5">
+                        <input type="number" id="startSoc" class="number-input" value="100" min="50" max="100" step="5">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="minSoc" title="What is the lowest charge level for vehicle during the trip (%)?">Minimum Charge Level (%)</label>
+                    <div class="input-container">
+                        <input type="range" id="minSocSlider" class="slider" min="5" max="30" value="10" step="1">
+                        <input type="number" id="minSoc" class="number-input" value="10" min="5" max="30" step="1">
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="endRangeRequirement" title="What is the minimum range required at the end of the trip (miles)?">End of Trip Range Minimum (miles)</label>
+                    <div class="input-container">
+                        <input type="range" id="endRangeRequirementSlider" class="slider" min="0" max="100" value="25" step="5">
+                        <input type="number" id="endRangeRequirement" class="number-input" value="25" min="0" max="100" step="5">
+                    </div>
+                </div>
+                <button id="optimizeBtn" class="btn" disabled>Upload Vehicle XML File Above</button>
+            </div>
+            <!-- Results Panel -->
+            <div class="results-panel">
+                <h2>Results</h2>
+                <!-- Default message -->
+                <div id="defaultMessage">
+                    <p style="text-align: center; color: #666; margin-top: 50px;">
+                        Upload at least one Vehicle XML file and click "Show Results" to see results.
+                    </p>
+                </div>
+                <!-- Error message -->
+                <div id="errorMessage" class="error hidden"></div>
+                <!-- Results content -->
+                <div id="resultsContent" class="hidden">
+                    <!-- Scenario Summary -->
+                    <div class="summary-section">
+                        <h3 class="section-title">Vehicle Summary</h3>
+                        <table class="summary-table" id="scenarioTable">
+                            <!-- Will be populated by JavaScript -->
+                        </table>
+                    </div>
+                    <!-- Trip Results -->
+                    <div class="summary-section">
+                        <h3 class="section-title">Trip Results</h3>
+                        <table class="summary-table" id="resultsTable">
+                            <!-- Will be populated by JavaScript -->
+                        </table>
+                    </div>
+                    <!-- Charts: Compare Vehicles Side-by-Side -->
+                    <div class="chart-container">
+                        <div class="chart-title">Total Travel Time By Activity</div>
+                        <div id="timeChartCombined"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">Vehicle Charge Level Over Time</div>
+                        <div id="socChartCombined"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">Vehicle Range Over Time</div>
+                        <div id="rangeChartCombined"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">Decision Explorer</div>
+                        <div style="margin-bottom:10px;">
+                            <select id="dpVehicleSelect" style="font-size:1em; display:none;"></select>
+                        </div>
+                        <div id="dpDecisionExplorer"></div>
+                        <div id="dpStepControls" style="margin-top:12px; display:flex; align-items:center; gap:12px;">
+                            <button id="dpPrevStep" class="btn" style="padding:6px 16px;">Previous</button>
+                            <button id="dpNextStep" class="btn" style="padding:6px 16px;">Next</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">Trip Timeline: Chargers Used vs. Skipped</div>
+                        <div class="compare-charts">
+                            <div>
+                                <div style="font-weight:600; margin-bottom:6px;" id="timelineName1"></div>
+                                <div id="timelineChart1"></div>
+                            </div>
+                            <div>
+                                <div style="font-weight:600; margin-bottom:6px;" id="timelineName2"></div>
+                                <div id="timelineChart2"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">Charger Usage Summary</div>
+                        <div class="compare-charts">
+                            <div>
+                                <div style="font-weight:600; margin-bottom:6px;" id="chargerSummaryName1"></div>
+                                <div id="chargerSummaryTable1"></div>
+                            </div>
+                            <div>
+                                <div style="font-weight:600; margin-bottom:6px;" id="chargerSummaryName2"></div>
+                                <div id="chargerSummaryTable2"></div>
+                            </div>
+                        </div>
+                    </div>
+                                       <div class="chart-container">
+                        <div class="chart-title">Vehicle Charging Curve</div>
+                        <div id="curveChartCombined"></div>
+                    </div>
+                    <!-- ...other charts/tables as needed... -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+/**
+ * EV Road Trip Metric Calculator
+ *
+ * This application optimizes electric vehicle charging strategies for long road trips.
+ * It uses dynamic programming to find the optimal charging stops and times to minimize
+ * total trip time while ensuring the vehicle reaches its destination with the required
+ * remaining range.
+ * 
+ * Key Features:
+ * - Compare up to 2 different EV models
+ * - Dynamic programming optimization algorithm
+ * - Interactive charts and visualizations
+ * - Exact end-of-trip range matching
+ * - Fractional State-of-Charge (SoC) calculations for better precision
+ */
+
+class EvChargingOptimizer {
+    constructor() {
+        // Vehicle 1 data
+        this.vehicleName1 = null;
+        this.vehicleRange1 = null;
+        this.chargingCurve1 = {};
+        
+        // Vehicle 2 data (optional for comparison)
+        this.vehicleName2 = null;
+        this.vehicleRange2 = null;
+        this.chargingCurve2 = {};
+        
+        // Dynamic programming tables for optimization algorithm
+        this.dpTable = {};           // Stores minimum time to reach each position/SoC state
+        this.decisions = {};         // Stores optimal decisions at each state
+        
+        // Current vehicle data (switches between vehicle 1 and 2 during calculations)
+        this.vehicleRange = null;
+        this.chargingCurve = {};
+        this.chargerPositions = [];  // Array of charger locations along the route
+        
+        // Decision explorer data for interactive visualization
+        this.dpExplorerData = [];
+        this.dpExplorerDataByVehicle = [];
+        this.dpExplorerStep = 0;
+        this.dpExplorerVehicleIdx = 0;
+        this.dpExplorerControlsSetup = false;
+        
+        // *** EDITABLE SCENARIO ASSUMPTIONS ***
+        // Travel constants (could be made configurable in future)
+        this.highwaySpeed = 70;  // mph
+        this.citySpeed = 30;     // mph for charger detours
+        
+        // Initialize the application
+        this.setupEventListeners();
+    }
+
+    /**
+     * Sets up all event listeners for user interface controls
+     * This connects HTML elements to JavaScript functions
+     */
+    setupEventListeners() {
+        // List of controls that have both sliders and number inputs
+        const controls = [
+            'drivingDistance', 'chargerDetourDistance', 'endRangeRequirement',
+            'startSoc', 'minSoc', 'chargerSpacing'
+        ];
+        
+        // Sync sliders with number inputs (when user moves slider, update number input)
+        controls.forEach(control => {
+            const slider = document.getElementById(control + 'Slider');
+            const input = document.getElementById(control);
+            
+            // When slider moves, update the number input
+            slider.addEventListener('input', () => { 
+                input.value = slider.value; 
+            });
+            
+            // When number input changes, update the slider
+            input.addEventListener('input', () => { 
+                slider.value = input.value; 
+            });
+        });
+        
+        // File upload events
+        document.getElementById('xmlFile1').addEventListener('change', (event) => {
+            // Enable Vehicle 2 XML input as soon as a file is selected for Vehicle 1
+            document.getElementById('xmlFile2').disabled = !event.target.files.length;
+            this.handleFileUpload(1, event);
+        });
+        document.getElementById('xmlFile2').addEventListener('change', this.handleFileUpload.bind(this, 2));
+        
+        // Main action buttons
+        document.getElementById('optimizeBtn').addEventListener('click', this.optimizeTrip.bind(this));
+        document.getElementById('clearXml1').addEventListener('click', () => this.clearVehicle(1));
+        document.getElementById('clearXml2').addEventListener('click', () => this.clearVehicle(2));
+    }
+
+    /**
+     * Shows error message to user and hides other content
+     * @param {string} message - Error message to display
+     */
+    showError(message) {
+        document.getElementById('defaultMessage').classList.add('hidden');
+        document.getElementById('resultsContent').classList.add('hidden');
+        document.getElementById('errorMessage').textContent = message;
+        document.getElementById('errorMessage').classList.remove('hidden');
+    }
+
+    /**
+     * Hides error message from user
+     */
+    hideError() {
+        document.getElementById('errorMessage').classList.add('hidden');
+    }
+
+    /**
+     * Clears vehicle data and resets UI state
+     * @param {number} vehicleNum - Which vehicle to clear (1 or 2)
+     */
+    clearVehicle(vehicleNum) {
+        if (vehicleNum === 1) {
+            // Clear vehicle 1 data
+            this.vehicleName1 = null;
+            this.vehicleRange1 = null;
+            this.chargingCurve1 = {};
+            document.getElementById('xmlFile1').value = '';
+            document.getElementById('clearXml1').style.display = 'none';
+        } else {
+            // Clear vehicle 2 data
+            this.vehicleName2 = null;
+            this.vehicleRange2 = null;
+            this.chargingCurve2 = {};
+            document.getElementById('xmlFile2').value = '';
+            document.getElementById('clearXml2').style.display = 'none';
+        }
+        
+        // Update optimize button state based on available vehicles
+        if (!this.chargingCurve1 || Object.keys(this.chargingCurve1).length === 0) {
+            // No vehicle 1, disable optimization
+            document.getElementById('optimizeBtn').disabled = true;
+            document.getElementById('optimizeBtn').textContent = 'Upload Vehicle XML File Above';
+        } else {
+            // Vehicle 1 exists, enable optimization
+            document.getElementById('optimizeBtn').disabled = false;
+            document.getElementById('optimizeBtn').textContent = this.chargingCurve2 && Object.keys(this.chargingCurve2).length > 0
+                ? 'Compare Vehicles'  // Both vehicles loaded
+                : 'Show Results';     // Only vehicle 1 loaded
+        }
+        
+        // Hide results and show default message
+        document.getElementById('resultsContent').classList.add('hidden');
+        document.getElementById('defaultMessage').classList.remove('hidden');
+        this.hideError();
+    }
+
+    /**
+     * Handles file upload events for vehicle XML files
+     * @param {number} vehicleNum - Which vehicle slot (1 or 2)
+     * @param {Event} event - File input change event
+     */
+    handleFileUpload(vehicleNum, event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    // Parse the XML file and load vehicle data
+                    this.loadChargingCurve(e.target.result, vehicleNum);
+                    
+                    if (vehicleNum === 1) {
+                        // Show clear button and enable optimization for vehicle 1
+                        document.getElementById('clearXml1').style.display = 'inline';
+                        document.getElementById('optimizeBtn').disabled = false;
+                        document.getElementById('optimizeBtn').textContent = this.chargingCurve2 && Object.keys(this.chargingCurve2).length > 0
+                            ? 'Compare Vehicles'
+                            : 'Show Results';
+                    } else {
+                        // Show clear button and update button text for vehicle 2
+                        document.getElementById('clearXml2').style.display = 'inline';
+                        document.getElementById('optimizeBtn').textContent = 'Compare Vehicles';
+                    }
+                    this.hideError();
+                } catch (error) {
+                    this.showError('Error parsing XML file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+    }
+
+    /**
+     * Parses XML file and extracts vehicle charging curve data
+     * @param {string} xmlData - Raw XML file content
+     * @param {number} vehicleNum - Which vehicle slot to load into (1 or 2)
+     */
+    loadChargingCurve(xmlData, vehicleNum) {
+        // Parse XML document
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlData, 'text/xml');
+        
+        // Check for XML parsing errors
+        if (xmlDoc.getElementsByTagName('parsererror').length > 0) {
+            throw new Error('Invalid XML format');
+        }
+        
+        // Initialize empty charging curve object
+        const curve = {};
+        
+        // Extract vehicle metadata (name and range)
+        const metadata = xmlDoc.querySelector('metadata');
+        if (!metadata) throw new Error('Missing metadata section');
+        
+        const nameElement = metadata.querySelector('name');
+        const rangeElement = metadata.querySelector('range_miles');
+        if (!nameElement || !rangeElement) {
+            throw new Error('Missing vehicle name or range in metadata');
+        }
+        
+        // Store vehicle metadata in appropriate slot
+        if (vehicleNum === 1) {
+            this.vehicleName1 = nameElement.textContent.trim();
+            this.vehicleRange1 = parseFloat(rangeElement.textContent.trim());
+        } else {
+            this.vehicleName2 = nameElement.textContent.trim();
+            this.vehicleRange2 = parseFloat(rangeElement.textContent.trim());
+        }
+        
+        // Extract charging curve data points
+        const chargingCurve = xmlDoc.querySelector('charging_curve');
+        if (!chargingCurve) throw new Error('Missing charging_curve section');
+        
+        const points = chargingCurve.querySelectorAll('point');
+        points.forEach(point => {
+            const soc = parseInt(point.getAttribute('soc'));
+            curve[soc] = {
+                powerKw: parseFloat(point.getAttribute('power')),    // Charging power in kW
+                timeMin: parseFloat(point.getAttribute('time')),     // Time to reach this SoC in minutes
+                energyKwh: parseFloat(point.getAttribute('energy'))  // Energy added in kWh
+            };
+        });
+        
+        // Store charging curve in appropriate slot
+        if (vehicleNum === 1) {
+            this.chargingCurve1 = curve;
+        } else {
+            this.chargingCurve2 = curve;
+        }
+    }
+
+    /**
+     * Retrieves current user input parameters for optimization
+     * @returns {Object} Parameters object with all trip settings
+     */
+    getParameters() {
+        return {
+            drivingDistance: parseFloat(document.getElementById('drivingDistance').value),
+            chargerDetourDistance: parseFloat(document.getElementById('chargerDetourDistance').value),
+            endRangeRequirement: parseFloat(document.getElementById('endRangeRequirement').value),
+            highwaySpeed: this.highwaySpeed,
+            citySpeed: this.citySpeed,
+            startSoc: parseFloat(document.getElementById('startSoc').value),
+            minSoc: parseFloat(document.getElementById('minSoc').value),
+            chargerSpacing: parseFloat(document.getElementById('chargerSpacing').value)
+        };
+    }
+
+    /**
+     * Converts State of Charge percentage to miles of range
+     * @param {number} socPercent - SoC as percentage (0-100)
+     * @param {number} vehicleRange - Total vehicle range in miles
+     * @returns {number} Range in miles
+     */
+    socToMiles(socPercent, vehicleRange) {
+        return (socPercent / 100.0) * vehicleRange;
+    }
+
+    /**
+     * Converts miles of range to State of Charge percentage
+     * @param {number} miles - Range in miles
+     * @param {number} vehicleRange - Total vehicle range in miles
+     * @returns {number} SoC as percentage (0-100)
+     */
+    milesToSoc(miles, vehicleRange) {
+        return (miles / vehicleRange) * 100.0;
+    }
+
+    /**
+     * Formats decimal hours into human-readable time format
+     * @param {number} decimalHours - Time in decimal hours (e.g., 1.5)
+     * @returns {string} Formatted time string (e.g., "1h 30m")
+     */
+    formatTime(decimalHours) {
+        const hours = Math.floor(decimalHours);
+        const minutes = Math.round((decimalHours - hours) * 60);
+        if (minutes === 0) {
+            return `${hours}h`;
+        }
+        return `${hours}h ${minutes}m`;
+    }
+
+    /**
+     * Calculates travel time including optional charger detour
+     * @param {number} distance - Direct distance to travel in miles
+     * @param {boolean} includeDetour - Whether to include charger detour time
+     * @param {Object} params - Trip parameters
+     * @returns {number} Total travel time in hours
+     */
+    calculateTravelTime(distance, includeDetour, params) {
+        if (includeDetour) {
+            // Time = highway driving + detour to/from charger at city speed
+            const highwayTime = distance / params.highwaySpeed;
+            const cityDetourTime = params.chargerDetourDistance / params.citySpeed;
+            return highwayTime + cityDetourTime;
+        } else {
+            // Direct highway driving only
+            return distance / params.highwaySpeed;
+        }
+    }
+
+    /**
+     * Calculates time needed to charge from one SoC level to another
+     * Uses the vehicle's charging curve data to determine charging time
+     * @param {number} fromSoc - Starting SoC percentage
+     * @param {number} toSoc - Target SoC percentage
+     * @returns {number} Charging time in hours
+     */
+    calculateChargingTime(fromSoc, toSoc) {
+        if (fromSoc >= toSoc) return 0.0;
+        
+        // Convert to integer SoC levels for lookup in charging curve
+        const fromSocInt = Math.max(0, Math.min(100, Math.floor(fromSoc)));
+        const toSocInt = Math.max(0, Math.min(100, Math.floor(toSoc)));
+        
+        // Look up charging times from curve (time to reach each SoC from 0%)
+        const startTime = this.chargingCurve[fromSocInt]?.timeMin || 0;
+        const endTime = this.chargingCurve[toSocInt]?.timeMin || 0;
+        
+        // Return difference in hours
+        return (endTime - startTime) / 60.0;
+    }
+
+    /**
+     * Determines if vehicle can reach target position with current SoC
+     * @param {number} currentPos - Current position in miles
+     * @param {number} currentSoc - Current State of Charge percentage
+     * @param {number} targetPos - Target position in miles
+     * @param {Object} params - Trip parameters
+     * @param {boolean} isDestination - Whether target is final destination
+     * @returns {boolean} True if position is reachable
+     */
+    canReachPosition(currentPos, currentSoc, targetPos, params, isDestination = false) {
+        const distanceNeeded = targetPos - currentPos;
+        const currentRange = this.socToMiles(currentSoc, this.vehicleRange);
+        const minRangeRequired = this.socToMiles(params.minSoc, this.vehicleRange);
+        
+        if (isDestination) {
+            // For final destination, allow going below minSoc to meet exact end range requirement
+            const endRangeRequired = params.endRangeRequirement;
+            return (currentRange - distanceNeeded) >= endRangeRequired;
+        }
+        
+        // For charging stops, maintain minimum SoC safety margin
+        return (currentRange - distanceNeeded) >= minRangeRequired;
+    }
+
+    /**
+     * Gets list of chargers reachable from current position with current SoC
+     * @param {number} currentPos - Current position in miles
+     * @param {number} currentSoc - Current State of Charge percentage
+     * @param {Object} params - Trip parameters
+     * @returns {Array} Array of reachable charger positions
+     */
+    getReachableChargers(currentPos, currentSoc, params) {
+        return this.chargerPositions.filter(chargerPos =>
+            chargerPos > currentPos &&
+            this.canReachPosition(currentPos, currentSoc, chargerPos, params)
+        );
+    }
+
+    /**
+     * MAIN OPTIMIZATION ALGORITHM
+     * Uses Dynamic Programming to find the optimal charging strategy
+     * 
+     * The algorithm works backwards from the destination, calculating the minimum
+     * time needed to complete the trip from each possible position and SoC state.
+     * 
+     * @param {Object} params - Trip parameters from user input
+     * @returns {Object} Optimization result with optimal time and path
+     */
+    optimizeChargingStrategy(params) {
+        // STEP 1: Setup charger positions along the route
+        this.chargerPositions = [];
+        for (let pos = params.chargerSpacing; pos < params.drivingDistance; pos += params.chargerSpacing) {
+            this.chargerPositions.push(pos);
+        }
+        
+        // STEP 2: Initialize Dynamic Programming tables
+        this.dpTable = {};    // dpTable[position][soc] = minimum time to complete trip
+        this.decisions = {};  // decisions[position][soc] = optimal action to take
+        
+        // STEP 3: Setup fractional SoC levels for precise calculations
+        const socStep = 0.5;  // Use 0.5% increments for precision
+        const minEndSoc = this.milesToSoc(params.endRangeRequirement, this.vehicleRange);
+        
+        // Create array of all possible SoC levels to consider
+        const startingSoc = Math.min(params.minSoc, minEndSoc);
+        const socLevels = [];
+        for (let soc = Math.floor(startingSoc * 2) / 2; soc <= 100; soc = +(soc + socStep).toFixed(2)) {
+            socLevels.push(+soc.toFixed(2));
+        }
+        
+        // Ensure the exact end SoC is included for precise matching
+        const roundedEndSoc = +(Math.round(minEndSoc * 2) / 2).toFixed(2);
+        if (!socLevels.includes(roundedEndSoc)) {
+            socLevels.push(roundedEndSoc);
+            socLevels.sort((a, b) => a - b);
+        }
+        
+        // STEP 4: Create all positions (start, chargers, destination)
+        const positions = [0, ...this.chargerPositions, params.drivingDistance].sort((a, b) => a - b);
+        
+        // STEP 5: Initialize DP tables with infinity (impossible states)
+        positions.forEach(pos => {
+            this.dpTable[pos] = {};
+            this.decisions[pos] = {};
+            socLevels.forEach(soc => {
+                this.dpTable[pos][soc] = Infinity;  // Initially impossible
+                this.decisions[pos][soc] = null;
+            });
+        });
+        
+        // STEP 6: Set base case - destination with at least the required end range
+        socLevels.forEach(soc => {
+            if (soc >= minEndSoc) {
+                this.dpTable[params.drivingDistance][soc] = 0.0;  // No time needed at destination
+            }
+        });
+        
+        // STEP 7: Fill DP table backwards from destination to start
+        for (let i = positions.length - 2; i >= 0; i--) {
+            const currentPos = positions[i];
+            
+            socLevels.forEach(currentSoc => {
+                // OPTION 1: Drive directly to destination (if reachable)
+                if (this.canReachPosition(currentPos, currentSoc, params.drivingDistance, params, true)) {
+                    const distance = params.drivingDistance - currentPos;
+                    const travelTime = this.calculateTravelTime(distance, false, params);
+                    const finalSoc = currentSoc - this.milesToSoc(distance, this.vehicleRange);
+                    
+                    // Allow ending with at least the required range (not exactly the required range)
+                    if (finalSoc >= minEndSoc && travelTime < this.dpTable[currentPos][currentSoc]) {
+                        this.dpTable[currentPos][currentSoc] = travelTime;
+                        this.decisions[currentPos][currentSoc] = ['driveToEnd', params.drivingDistance, finalSoc];
+                    }
+                }
+                
+                // OPTION 2: Drive to a charger, charge up, then continue optimally
+                const reachableChargers = this.getReachableChargers(currentPos, currentSoc, params);
+                reachableChargers.forEach(nextCharger => {
+                    const distanceToCharger = (nextCharger - currentPos) + params.chargerDetourDistance;
+                    const travelTimeToCharger = this.calculateTravelTime(nextCharger - currentPos, true, params);
+                    const socAtCharger = currentSoc - this.milesToSoc(distanceToCharger, this.vehicleRange);
+                    
+                    // Can't charge if below minimum SoC at charger
+                    if (socAtCharger < params.minSoc) return;
+                    
+                    // Try charging to any higher SoC level
+                    for (let chargeToSoc = Math.ceil(socAtCharger * 2) / 2 + socStep; chargeToSoc <= 100; chargeToSoc = +(chargeToSoc + socStep).toFixed(2)) {
+                        const chargingTime = this.calculateChargingTime(socAtCharger, chargeToSoc);
+                        
+                        // Check if this charging option leads to a valid solution
+                        if (this.dpTable[nextCharger][chargeToSoc] !== undefined && this.dpTable[nextCharger][chargeToSoc] !== Infinity) {
+                            const totalTime = travelTimeToCharger + chargingTime + this.dpTable[nextCharger][chargeToSoc];
+                            
+                            // Update if this is the best option found so far
+                            if (totalTime < this.dpTable[currentPos][currentSoc]) {
+                                this.dpTable[currentPos][currentSoc] = totalTime;
+                                this.decisions[currentPos][currentSoc] = ['charge', nextCharger, chargeToSoc];
+                            }
+                        }
+                    }
+                });
+            });
+        }
+        
+        // STEP 8: Extract the optimal solution
+        // Find the closest SoC in socLevels to the user's starting SoC
+        function findClosestSoc(target, socArr) {
+            return socArr.reduce((prev, curr) => Math.abs(curr - target) < Math.abs(prev - target) ? curr : prev);
+        }
+        
+        const startSoc = findClosestSoc(params.startSoc, socLevels);
+        const optimalTime = this.dpTable[0][startSoc];
+        
+        // STEP 9: Check if a valid solution was found
+        if (optimalTime === Infinity) {
+            const endRangeMiles = params.endRangeRequirement;
+            const endRangeSoc = this.milesToSoc(endRangeMiles, this.vehicleRange);
+            const minSocMiles = this.socToMiles(params.minSoc, this.vehicleRange);
+            
+            // Provide helpful error messages for debugging
+            console.log(`No valid trip found. Required to end with exactly ${endRangeMiles} miles (${endRangeSoc.toFixed(1)}% charge level) remaining.`);
+            if (endRangeMiles < minSocMiles) {
+                console.log(`Note: End range requirement (${endRangeMiles} mi) is below minimum SoC safety margin (${minSocMiles.toFixed(1)} mi).`);
+                console.log(`This is allowed for the final destination but may limit charging options.`);
+            }
+            console.log(`Try adjusting: trip distance, charger spacing, minimum SoC, or end range requirement.`);
+            return { optimalTime: Infinity, path: [] };
+        }
+        
+        // STEP 10: Reconstruct the optimal path by following decisions
+        const path = [];
+        let currentPos = 0;
+        let currentSoc = startSoc;
+        
+        while (currentPos < params.drivingDistance) {
+            // Snap to closest SoC for lookup in DP tables
+            currentSoc = findClosestSoc(currentSoc, socLevels);
+            const decision = this.decisions[currentPos][currentSoc];
+            if (!decision) break;
+            
+            const [action, nextPos, chargeLevel] = decision;
+            
+            if (action === 'driveToEnd') {
+                // Final drive to destination
+                path.push({
+                    action: 'driveToEnd',
+                    fromPosition: currentPos,
+                    toPosition: params.drivingDistance,
+                    socStart: currentSoc,
+                    socEnd: currentSoc - this.milesToSoc(params.drivingDistance - currentPos, this.vehicleRange)
+                });
+                break;
+            } else if (action === 'charge') {
+                // Drive to charger and charge
+                const distance = (nextPos - currentPos) + params.chargerDetourDistance;
+                const socAtCharger = currentSoc - this.milesToSoc(distance, this.vehicleRange);
+                path.push({
+                    action: 'driveAndCharge',
+                    fromPosition: currentPos,
+                    toPosition: nextPos,
+                    socStart: currentSoc,
+                    socAtCharger: socAtCharger,
+                    socAfterCharge: chargeLevel,
+                    chargeTimeHours: this.calculateChargingTime(socAtCharger, chargeLevel)
+                });
+                currentPos = nextPos;
+                currentSoc = chargeLevel;
+            }
+        }
+        
+        return { optimalTime, path };
+    }
+
+    // Store DP choices for explorer
+    storeDpChoicesForExplorer(path, params, vehicleRange) {
+        this.dpExplorerData = [];
+        // Snap startSoc to closest available value in socLevels
+        function findClosestSoc(target, socArr) {
+            return socArr.reduce((prev, curr) => Math.abs(curr - target) < Math.abs(prev - target) ? curr : prev);
+        }
+        const socStep = 0.5;
+        const socLevels = [];
+        for (let soc = Math.ceil(params.minSoc * 2) / 2; soc <= 100; soc = +(soc + socStep).toFixed(2)) {
+            socLevels.push(+soc.toFixed(2));
+        }
+        let currentPos = 0;
+        let currentSoc = findClosestSoc(params.startSoc, socLevels);
+        for (let i = 0; i < path.length; i++) {
+            const step = path[i];
+            const choices = [];
+            
+            // For all steps, show possible charging choices from current position
+            if (step.action === 'driveAndCharge') {
+                // This is a charging step - show all possible charger choices
+                const chargerPositions = this.chargerPositions.filter(pos => pos > currentPos);
+                chargerPositions.forEach(nextCharger => {
+                    const distanceToCharger = (nextCharger - currentPos) + params.chargerDetourDistance;
+                    const socAtCharger = currentSoc - this.milesToSoc(distanceToCharger, vehicleRange);
+                    if (socAtCharger < params.minSoc) return;
+                    // Use raw calculated values for display consistency
+                    for (let chargeToSoc = Math.ceil(socAtCharger * 2) / 2 + socStep; chargeToSoc <= 100; chargeToSoc = +(chargeToSoc + socStep).toFixed(2)) {
+                        const chargingTime = this.calculateChargingTime(socAtCharger, chargeToSoc);
+                        choices.push({
+                            nextCharger,
+                            socAtCharger: socAtCharger, // Use raw value
+                            chargeToSoc: chargeToSoc,   // Use raw value
+                            chargingTime,
+                            rangeAfterCharge: (chargeToSoc / 100) * vehicleRange
+                        });
+                    }
+                });
+                
+                this.dpExplorerData.push({
+                    stopIndex: this.dpExplorerData.length,
+                    fromPosition: currentPos,
+                    fromSoc: currentSoc,
+                    actual: {
+                        toPosition: step.toPosition,
+                        socAtCharger: step.socAtCharger, // Use raw value
+                        socAfterCharge: step.socAfterCharge, // Use raw value
+                        chargeTimeHours: step.chargeTimeHours
+                    },
+                    choices
+                });
+                currentPos = step.toPosition;
+                currentSoc = step.socAfterCharge;
+            } else if (step.action === 'driveToEnd') {
+                // This is a drive-to-end step - show it as the final decision
+                this.dpExplorerData.push({
+                    stopIndex: this.dpExplorerData.length,
+                    fromPosition: currentPos,
+                    fromSoc: currentSoc,
+                    actual: {
+                        toPosition: step.toPosition,
+                        socAtCharger: step.socStart, // Use raw value
+                        socAfterCharge: step.socEnd, // Use raw value
+                        chargeTimeHours: 0
+                    },
+                    choices: [] // No choices, just the final drive
+                });
+                // This is the end, so break out
+                break;
+            }
+        }
+        this.dpExplorerStep = 0;
+    }
+
+    // Render the DP decision explorer chart for the current step
+    renderDpDecisionExplorer() {
+        const data = this.dpExplorerData;
+        if (!data || data.length === 0) {
+            document.getElementById('dpDecisionExplorer').innerHTML = '<em>No charging stops to explore.</em>';
+            document.getElementById('dpPrevStep').disabled = true;
+            document.getElementById('dpNextStep').disabled = true;
+            return;
+        }
+        const step = this.dpExplorerStep;
+        const stop = data[step];
+        document.getElementById('dpPrevStep').disabled = step === 0;
+        document.getElementById('dpNextStep').disabled = step === data.length - 1;
+
+        // Prepare chart data
+        let allChoices = [];
+        if (stop.choices && stop.choices.length > 0) {
+            allChoices = stop.choices.map(choice => ({
+                x: choice.nextCharger,
+                y: choice.chargeToSoc,
+                socAtCharger: choice.socAtCharger,
+                chargingTime: choice.chargingTime,
+                rangeAfterCharge: choice.rangeAfterCharge,
+                marker: { symbol: 'circle', fillColor: '#bbb', radius: 6 }
+            }));
+        }
+        // Highlight the actual choice
+        const actual = stop.actual;
+        if (allChoices.length > 0) {
+            allChoices.push({
+                x: actual.toPosition,
+                y: actual.socAfterCharge,
+                socAtCharger: actual.socAtCharger,
+                chargingTime: actual.chargeTimeHours,
+                rangeAfterCharge: actual.socAfterCharge / 100 * this.vehicleRange,
+                marker: { symbol: 'circle', fillColor: '#2ecc71', lineColor: '#222', radius: 10 }
+            });
+        }
+        // Add a dot for the vehicle's starting position and SOC before this step
+        const startDot = {
+            x: stop.fromPosition,
+            y: stop.fromSoc,
+            socAtCharger: stop.fromSoc,
+            chargingTime: 0,
+            rangeAfterCharge: stop.fromSoc / 100 * this.vehicleRange,
+            marker: { symbol: 'circle', fillColor: '#3498db', radius: 10, lineColor: '#222', lineWidth: 2 }
+        };
+        // Build series array step-by-step
+        const seriesArr = [];
+        if (allChoices.length > 1) {
+            seriesArr.push({
+                name: 'Possible Choices',
+                data: allChoices.slice(0, -1),
+                color: '#bbb',
+                marker: { symbol: 'circle', radius: 6 }
+            });
+            seriesArr.push({
+                name: 'Charge Selected',
+                data: [allChoices[allChoices.length - 1]],
+                color: '#2ecc71',
+                marker: { symbol: 'circle', radius: 10, lineColor: '#222', lineWidth: 2 }
+            });
+        }
+        seriesArr.push({
+            name: 'Start',
+            data: [startDot],
+            color: '#3498db',
+            marker: { symbol: 'circle', radius: 10, lineColor: '#222', lineWidth: 2 }
+        });
+        // If this is the last step (final drive to destination), add end-of-trip dot
+        if (step === data.length - 1) {
+            const totalDistance = this.dpExplorerDataByVehicle[this.dpExplorerVehicleIdx].params.drivingDistance;
+            let finalSoc = stop.actual.socAfterCharge;
+            // Insert End destination before Start in the legend by adding it before Start
+            seriesArr.splice(-1, 0, {
+                name: 'End (Final Destination)',
+                data: [
+                    {
+                        x: totalDistance,
+                        y: finalSoc,
+                        socAtCharger: finalSoc,
+                        chargingTime: 0,
+                        rangeAfterCharge: finalSoc / 100 * this.vehicleRange,
+                        marker: { symbol: 'circle', fillColor: '#8e44ad', radius: 10, lineColor: '#222', lineWidth: 2 }
+                    }
+                ],
+                color: '#8e44ad',
+                marker: { symbol: 'circle', radius: 10, lineColor: '#222', lineWidth: 2 }
+            });
+        }
+        Highcharts.chart('dpDecisionExplorer', {
+            chart: { type: 'scatter', height: 340 },
+            title: { text: `Step ${step + 1}` },
+            xAxis: {
+                title: { text: 'Position (miles)' },
+                min: 0,
+                max: this.dpExplorerDataByVehicle[this.dpExplorerVehicleIdx].params.drivingDistance
+            },
+            yAxis: { title: { text: 'Charge Level (%)' }, min: 0, max: 100 },
+            legend: { reversed: true },
+            customTotalDistance: this.dpExplorerDataByVehicle[this.dpExplorerVehicleIdx].params.drivingDistance,
+            tooltip: {
+                formatter: function() {
+                    const chart = this.series.chart;
+                    const totalDistance = chart.options.customTotalDistance || 0;
+                    const remainingDistance = (totalDistance - this.x).toFixed(1);
+                    return `<b>Location:</b> ${this.x} mi<br/>
+                            <b>Charge Level (Arrival):</b> ${this.point.socAtCharger.toFixed(1)}%<br/>
+                            <b>Charge Level (Departure):</b> ${this.y.toFixed(1)}%<br/>
+                            <b>Range (Departure):</b> ${this.point.rangeAfterCharge.toFixed(1)} mi<br/>
+                            <b>Charging Time:</b> ${(this.point.chargingTime * 60).toFixed(1)} min<br/>
+                            <b>Remaining Driving Distance:</b> ${remainingDistance} mi`;
+                }
+            },
+            series: seriesArr
+        });
+    }
+
+    // Add event listeners for step navigation
+    setupDpExplorerControls() {
+        // Remove any existing event listeners by cloning and replacing the buttons
+        const prevBtn = document.getElementById('dpPrevStep');
+        const nextBtn = document.getElementById('dpNextStep');
+        const newPrevBtn = prevBtn.cloneNode(true);
+        const newNextBtn = nextBtn.cloneNode(true);
+        prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+        nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+        
+        // Add fresh event listeners
+        document.getElementById('dpPrevStep').addEventListener('click', () => {
+            if (this.dpExplorerStep > 0) {
+                this.dpExplorerStep--;
+                this.renderDpDecisionExplorer();
+            }
+        });
+        document.getElementById('dpNextStep').addEventListener('click', () => {
+            if (this.dpExplorerStep < this.dpExplorerData.length - 1) {
+                this.dpExplorerStep++;
+                this.renderDpDecisionExplorer();
+            }
+        });
+    }
+
+    optimizeTrip() {
+        if (!this.chargingCurve1) {
+            this.showError('Please upload at least one XML file.');
+            return;
+        }
+        setTimeout(() => {
+            try {
+                const params = this.getParameters();
+                // Vehicle 1
+                this.vehicleRange = this.vehicleRange1;
+                this.chargingCurve = this.chargingCurve1;
+                const result1 = this.optimizeChargingStrategy(params);
+                let result2 = null;
+                if (
+                    this.chargingCurve2 &&
+                    Object.keys(this.chargingCurve2).length > 0 &&
+                    this.vehicleName2 &&
+                    this.vehicleRange2
+                ) {
+                    this.vehicleRange = this.vehicleRange2;
+                    this.chargingCurve = this.chargingCurve2;
+                    result2 = this.optimizeChargingStrategy(params);
+                }
+                this.displayComparisonResults(result1, result2, params);
+            } catch (error) {
+                this.showError('Optimization error: ' + error.message);
+            }
+        }, 100);
+    }
+
+    displayComparisonResults(result1, result2, params) {
+        this.hideError();
+        document.getElementById('defaultMessage').classList.add('hidden');
+        document.getElementById('resultsContent').classList.remove('hidden');
+
+        if (!result1.path.length) {
+            this.showError('No valid trip found for the uploaded vehicle with the current parameters.');
+            return;
+        }
+        if (result2 && !result2.path.length) {
+            this.showError('No valid trip found for the second vehicle with the current parameters.');
+            return;
+        }
+
+        // Scenario Table
+        let scenarioHtml = `
+            <tr><th>Vehicle Model 1</th><td>${this.vehicleName1}</td></tr>
+            <tr><th>Vehicle Range 1 (miles)</th><td>${this.vehicleRange1}</td></tr>
+        `;
+        if (result2) {
+            scenarioHtml += `
+                <tr><th>Vehicle Model 2</th><td>${this.vehicleName2}</td></tr>
+                <tr><th>Vehicle Range 2 (miles)</th><td>${this.vehicleRange2}</td></tr>
+            `;
+        }
+        document.getElementById('scenarioTable').innerHTML = scenarioHtml;
+
+        // Results Table
+        let resultsHtml = `<tr><th></th><th>${this.vehicleName1}</th>`;
+        if (result2) resultsHtml += `<th>${this.vehicleName2}</th>`;
+        resultsHtml += `</tr>`;
+        
+        // Calculate actual end-of-trip ranges
+        const finalStep1 = result1.path[result1.path.length - 1];
+        const endRange1 = this.socToMiles(finalStep1.socEnd, this.vehicleRange1);
+        let endRange2 = null;
+        if (result2) {
+            const finalStep2 = result2.path[result2.path.length - 1];
+            endRange2 = this.socToMiles(finalStep2.socEnd, this.vehicleRange2);
+        }
+        
+        resultsHtml += [
+            ['Total Travel Time', this.formatTime(result1.optimalTime), result2 ? this.formatTime(result2.optimalTime) : null],
+            ['Charging Stops', result1.path.filter(s => s.action === 'driveAndCharge').length, result2 ? result2.path.filter(s => s.action === 'driveAndCharge').length : null],
+            ['End Vehicle Range', `${endRange1.toFixed(1)} mi`, result2 ? `${endRange2.toFixed(1)} mi` : null]
+        ].map(([label, v1, v2]) =>
+            `<tr><th>${label}</th><td>${v1}</td>${result2 ? `<td>${v2}</td>` : ''}</tr>`
+        ).join('');
+        document.getElementById('resultsTable').innerHTML = resultsHtml;
+
+        // Charts
+        const times1 = this.getTimeBreakdown(result1, params);
+        let times2 = null;
+        if (result2) {
+            this.vehicleRange = this.vehicleRange2;
+            this.chargingCurve = this.chargingCurve2;
+            times2 = this.getTimeBreakdown(result2, params);
+        }
+        this.createTimeChartCombined(times1, times2, this.vehicleName1, result2 ? this.vehicleName2 : null);
+
+        const socSeries1 = this.getSocSeries(result1.path, params, this.vehicleRange1);
+        let socSeries2 = null;
+        if (result2) {
+            socSeries2 = this.getSocSeries(result2.path, params, this.vehicleRange2);
+        }
+        this.createSocChartCombined(socSeries1, socSeries2, this.vehicleName1, result2 ? this.vehicleName2 : null);
+
+        const rangeSeries1 = this.getRangeSeries(result1.path, params, this.vehicleRange1);
+        let rangeSeries2 = null;
+        if (result2) {
+            rangeSeries2 = this.getRangeSeries(result2.path, params, this.vehicleRange2);
+        }
+        this.createRangeChartCombined(rangeSeries1, rangeSeries2, this.vehicleName1, result2 ? this.vehicleName2 : null);
+
+        this.createChargingCurveChartCombined(this.chargingCurve1, result2 ? this.chargingCurve2 : null, this.vehicleName1, result2 ? this.vehicleName2 : null);
+
+        // Trip Timeline: Chargers Used vs. Skipped
+        this.vehicleRange = this.vehicleRange1;
+        this.chargingCurve = this.chargingCurve1;
+        this.createTimelineChart(result1.path, params, 'timelineChart1');
+        document.getElementById('timelineName1').textContent = this.vehicleName1;
+        if (result2) {
+            this.vehicleRange = this.vehicleRange2;
+            this.chargingCurve = this.chargingCurve2;
+            this.createTimelineChart(result2.path, params, 'timelineChart2');
+            document.getElementById('timelineName2').textContent = this.vehicleName2;
+        } else {
+            document.getElementById('timelineName2').textContent = '';
+            document.getElementById('timelineChart2').innerHTML = '';
+        }
+
+        // Charger Usage Summary
+        this.vehicleRange = this.vehicleRange1;
+        this.chargingCurve = this.chargingCurve1;
+        this.createChargerSummaryTable(result1.path, params, 'chargerSummaryTable1');
+        document.getElementById('chargerSummaryName1').textContent = this.vehicleName1;
+        if (result2) {
+            this.vehicleRange = this.vehicleRange2;
+            this.chargingCurve = this.chargingCurve2;
+            this.createChargerSummaryTable(result2.path, params, 'chargerSummaryTable2');
+            document.getElementById('chargerSummaryName2').textContent = this.vehicleName2;
+        } else {
+            document.getElementById('chargerSummaryName2').textContent = '';
+            document.getElementById('chargerSummaryTable2').innerHTML = '';
+        }
+
+        // Setup DP Explorer for vehicles
+        this.setupDpExplorerForVehicles(result1, result2, params);
+        
+        // Setup DP explorer controls (always refresh to avoid duplicate listeners)
+        this.setupDpExplorerControls();
+    }
+
+    setupDpExplorerForVehicles(result1, result2, params) {
+        // Store DP data for both vehicles
+        this.dpExplorerDataByVehicle = [];
+        if (result1) {
+            this.dpExplorerDataByVehicle.push({
+                path: result1.path,
+                params,
+                vehicleRange: this.vehicleRange1,
+                name: this.vehicleName1
+            });
+        }
+        if (result2) {
+            this.dpExplorerDataByVehicle.push({
+                path: result2.path,
+                params,
+                vehicleRange: this.vehicleRange2,
+                name: this.vehicleName2
+            });
+        }
+        // Populate dropdown if more than one vehicle
+        const select = document.getElementById('dpVehicleSelect');
+        select.innerHTML = '';
+        if (this.dpExplorerDataByVehicle.length > 1) {
+            select.style.display = '';
+            this.dpExplorerDataByVehicle.forEach((v, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.textContent = v.name;
+                select.appendChild(opt);
+            });
+            select.value = 0;
+        } else {
+            select.style.display = 'none';
+        }
+        // Always show the first vehicle by default
+        this.dpExplorerVehicleIdx = 0;
+        this.updateDpExplorerData();
+        select.onchange = () => {
+            this.dpExplorerVehicleIdx = parseInt(select.value, 10);
+            this.updateDpExplorerData();
+        };
+    }
+
+    updateDpExplorerData() {
+        const v = this.dpExplorerDataByVehicle[this.dpExplorerVehicleIdx];
+        this.storeDpChoicesForExplorer(v.path, v.params, v.vehicleRange);
+        this.renderDpDecisionExplorer();
+    }
+
+    getTimeBreakdown(result, params) {
+        const numDetours = result.path.filter(step => step.action === 'driveAndCharge').length;
+        let drivingTime = params.drivingDistance / params.highwaySpeed;
+        let detourTime = numDetours * params.chargerDetourDistance / params.citySpeed;
+        let chargingTime = 0;
+        result.path.forEach(step => {
+            if (step.action === 'driveAndCharge') {
+                chargingTime += step.chargeTimeHours;
+            }
+        });
+        return { drivingTime, detourTime, chargingTime };
+    }
+
+    /**
+     * CHART GENERATION FUNCTIONS
+     * These functions create interactive Highcharts visualizations to display optimization results
+     */
+    
+    /**
+     * Creates a horizontal bar chart comparing trip times between vehicles
+     * Shows stacked bars with driving time, detour time, and charging time
+     * @param {Object} times1 - Time breakdown for first vehicle
+     * @param {Object} times2 - Time breakdown for second vehicle (optional)
+     * @param {string} name1 - Display name for first vehicle
+     * @param {string} name2 - Display name for second vehicle (optional)
+     */
+    createTimeChartCombined(times1, times2, name1, name2) {
+        // Helper function to calculate dynamic total based on visible series
+        const calculateVisibleTotal = (times, chart) => {
+            if (!chart || !chart.series) {
+                // Initial load - show total of all three
+                return times.chargingTime + times.detourTime + times.drivingTime;
+            }
+            
+            let total = 0;
+            // Check each series visibility and add to total if visible
+            chart.series.forEach(series => {
+                if (series.visible) {
+                    const seriesIndex = series.index;
+                    if (seriesIndex === 0) total += times.chargingTime;      // Charging Time
+                    else if (seriesIndex === 1) total += times.detourTime;   // Charger Detour Time  
+                    else if (seriesIndex === 2) total += times.drivingTime;  // Driving Time
+                }
+            });
+            return total;
+        };
+        
+        // Helper function to update category labels dynamically
+        const updateCategoryLabels = (chart) => {
+            const times = [times1];
+            const names = [name1];
+            if (times2 && name2) {
+                times.push(times2);
+                names.push(name2);
+            }
+            
+            const newCategories = times.map((timeData, index) => {
+                const visibleTotal = calculateVisibleTotal(timeData, chart);
+                const optimizer = window.optimizer;
+                const formattedTotal = optimizer ? optimizer.formatTime(visibleTotal) : `${visibleTotal.toFixed(2)}h`;
+                return `${names[index]}<br/>(${formattedTotal})`;
+            });
+            
+            chart.xAxis[0].setCategories(newCategories);
+        };
+        
+        // Setup data arrays for chart categories and time components
+        const totalTime1 = times1.chargingTime + times1.detourTime + times1.drivingTime;
+        const categories = [`${name1}<br/>(${this.formatTime(totalTime1)})`]; // Add total time on new line
+        const chargingData = [times1.chargingTime];
+        const detourData = [times1.detourTime];
+        const drivingData = [times1.drivingTime];
+        
+        // Add second vehicle data if provided (for comparison mode)
+        if (times2 && name2) {
+            const totalTime2 = times2.chargingTime + times2.detourTime + times2.drivingTime;
+            categories.push(`${name2}<br/>(${this.formatTime(totalTime2)})`);
+            chargingData.push(times2.chargingTime);
+            detourData.push(times2.detourTime);
+            drivingData.push(times2.drivingTime);
+        }
+        
+        // Store reference for chart tooltips BEFORE creating the chart (fixes timing initialization bug)
+        if (!window.optimizer) window.optimizer = this;
+        
+        Highcharts.chart('timeChartCombined', {
+            chart: { type: 'bar', height: 320 },
+            title: { text: null },
+            xAxis: { 
+                categories, 
+                title: { text: null },
+                labels: {
+                    useHTML: true // Enable HTML rendering for line breaks
+                }
+            },
+            yAxis: { min: 0, title: { text: 'Hours' } },
+            legend: { 
+                reversed: true,
+                itemStyle: {
+                    cursor: 'pointer'
+                }
+            },
+            plotOptions: { 
+                series: { 
+                    stacking: 'normal',
+                    dataLabels: {
+                        enabled: false // Disable for individual segments to avoid clutter
+                    },
+                    events: {
+                        // Update category labels when series visibility changes
+                        legendItemClick: function() {
+                            const chart = this.chart;
+                            // Use setTimeout to ensure the series visibility has been updated
+                            setTimeout(() => {
+                                updateCategoryLabels(chart);
+                            }, 10);
+                            // Return true to allow default legend behavior
+                            return true;
+                        }
+                    }
+                }
+            },
+            tooltip: {
+                // Enhanced tooltip showing formatted time values
+                formatter: function() {
+                    const optimizer = window.optimizer;
+                    const formattedValue = optimizer ? optimizer.formatTime(this.y) : `${this.y.toFixed(2)}h`;
+                    const vehicleName = this.series.chart.xAxis[0].categories[this.point.x];
+                    return `<b>${vehicleName}</b><br/>${this.series.name}: ${formattedValue}`;
+                }
+            },
+            series: [
+                { name: 'Charging Time', data: chargingData, color: '#ff7f0e' }, // Changed to orange
+                { name: 'Charger Detour Time', data: detourData, color: '#2ca02c' }, // Changed to green
+                { 
+                    name: 'Driving Time', 
+                    data: drivingData, 
+                    color: '#1f77b4',
+                    dataLabels: {
+                        enabled: false // Removed total time labels from bars
+                    }
+                }
+            ]
+        });
+    }
+
+    /**
+     * Converts optimization path into time-series data for SoC visualization
+     * @param {Array} path - Optimization path with charging decisions
+     * @param {Object} params - Trip parameters
+     * @param {number} vehicleRange - Vehicle range in miles
+     * @returns {Array} Array of [time, soc] points for charting
+     */
+    getSocSeries(path, params, vehicleRange) {
+        const times = [];
+        const socs = [];
+        let currentTime = 0;
+        
+        // Add starting point
+        times.push(currentTime);
+        socs.push(path[0].socStart);
+        
+        // Process each decision in the optimization path
+        path.forEach(decision => {
+            // Calculate driving time to next position
+            let driveDistance = decision.toPosition - decision.fromPosition;
+            let driveTime = (decision.action === 'driveAndCharge')
+                ? this.calculateTravelTime(driveDistance, true, params)  // With charger detour
+                : this.calculateTravelTime(driveDistance, false, params); // Direct drive
+            
+            currentTime += driveTime;
+            
+            // Add point when arriving at destination (after consuming battery)
+            let arriveSoc = (decision.action === 'driveAndCharge') ? decision.socAtCharger : decision.socEnd;
+            times.push(currentTime);
+            socs.push(arriveSoc);
+            
+            // If charging, add point after charging completes
+            if (decision.action === 'driveAndCharge') {
+                currentTime += decision.chargeTimeHours;
+                times.push(currentTime);
+                socs.push(decision.socAfterCharge);
+            }
+        });
+        
+        // Return formatted data for Highcharts
+        return times.map((t, i) => [t, socs[i]]);
+    }
+
+    /**
+     * Creates a line chart showing State of Charge over time for vehicle comparison
+     * @param {Array} series1 - SoC time series data for first vehicle
+     * @param {Array} series2 - SoC time series data for second vehicle (optional)
+     * @param {string} name1 - Display name for first vehicle
+     * @param {string} name2 - Display name for second vehicle (optional)
+     */
+    createSocChartCombined(series1, series2, name1, name2) {
+        // Setup chart series data
+        const chartSeries = [
+            { name: name1, data: series1, color: 'orange', marker: { symbol: 'circle', enabled: true } }
+        ];
+        
+        // Add second vehicle series if provided (for comparison mode)
+        if (series2 && name2) {
+            chartSeries.push({ 
+                name: name2, 
+                data: series2, 
+                color: 'blue', 
+                marker: { symbol: 'circle', enabled: true } 
+            });
+        }
+        
+        Highcharts.chart('socChartCombined', {
+            chart: { type: 'line', height: 350 },
+            title: { text: null },
+            xAxis: { title: { text: 'Elapsed Time (hours)' }, type: 'linear', min: 0 },
+            yAxis: { title: { text: 'Charge Level (%)' }, min: 0, max: 100 },
+            series: chartSeries,
+            tooltip: { 
+                valueDecimals: 1, 
+                valueSuffix: '%',
+                // Enhanced tooltip showing vehicle name and formatted time
+                formatter: function() {
+                    const optimizer = window.optimizer;
+                    const timeFormatted = optimizer ? optimizer.formatTime(this.x) : `${this.x.toFixed(1)}h`;
+                    return `<b>${this.series.name}</b><br/>
+                            Time: ${timeFormatted}<br/>
+                            Charge Level: ${this.y.toFixed(1)}%`;
+                }
+            }
+        });
+    }
+
+    /**
+     * Converts optimization path into time-series data for range visualization
+     * @param {Array} path - Optimization path with charging decisions
+     * @param {Object} params - Trip parameters
+     * @param {number} vehicleRange - Vehicle range in miles
+     * @returns {Array} Array of [time, range_in_miles] points for charting
+     */
+    getRangeSeries(path, params, vehicleRange) {
+        const times = [];
+        const ranges = [];
+        let currentTime = 0;
+        
+        // Add starting point (convert SoC to miles of range)
+        times.push(currentTime);
+        ranges.push(path[0].socStart / 100.0 * vehicleRange);
+        
+        // Process each decision in the optimization path
+        path.forEach(decision => {
+            // Calculate driving time to next position
+            let driveDistance = decision.toPosition - decision.fromPosition;
+            let driveTime = (decision.action === 'driveAndCharge')
+                ? this.calculateTravelTime(driveDistance, true, params)  // With charger detour
+                : this.calculateTravelTime(driveDistance, false, params); // Direct drive
+            
+            currentTime += driveTime;
+            
+            // Add point when arriving at destination (after consuming battery)
+            let arriveSoc = (decision.action === 'driveAndCharge') ? decision.socAtCharger : decision.socEnd;
+            ranges.push(arriveSoc / 100.0 * vehicleRange);
+            times.push(currentTime);
+            
+            // If charging, add point after charging completes
+            if (decision.action === 'driveAndCharge') {
+                currentTime += decision.chargeTimeHours;
+                ranges.push(decision.socAfterCharge / 100.0 * vehicleRange);
+                times.push(currentTime);
+            }
+        });
+        
+        // Return formatted data for Highcharts
+        return times.map((t, i) => [t, ranges[i]]);
+    }
+
+    createRangeChartCombined(series1, series2, name1, name2) {
+        const chartSeries = [
+            { name: name1, data: series1, color: 'orange', marker: { symbol: 'circle', enabled: true } }
+        ];
+        if (series2 && name2) {
+            chartSeries.push({ name: name2, data: series2, color: 'blue', marker: { symbol: 'circle', enabled: true } });
+        }
+        Highcharts.chart('rangeChartCombined', {
+            chart: { type: 'line', height: 350 },
+            title: { text: null },
+            xAxis: { title: { text: 'Elapsed Time (hours)' }, type: 'linear', min: 0 },
+            yAxis: { title: { text: 'Remaining Range (miles)' }, min: 0 },
+            series: chartSeries,
+            tooltip: { 
+                valueDecimals: 1, 
+                valueSuffix: ' mi',
+                // Enhanced tooltip showing vehicle name and formatted time
+                formatter: function() {
+                    const optimizer = window.optimizer;
+                    const timeFormatted = optimizer ? optimizer.formatTime(this.x) : `${this.x.toFixed(1)}h`;
+                    return `<b>${this.series.name}</b><br/>
+                            Time: ${timeFormatted}<br/>
+                            Range: ${this.y.toFixed(1)} mi`;
+                }
+            }
+        });
+    }
+
+    createChargingCurveChartCombined(curve1, curve2, name1, name2) {
+        const socs1 = Object.keys(curve1).map(Number).sort((a, b) => a - b);
+        const powers1 = socs1.map(soc => curve1[soc].powerKw);
+        const chartSeries = [
+            { name: name1, data: socs1.map((soc, i) => [soc, powers1[i]]), color: 'orange' }
+        ];
+        if (curve2 && name2) {
+            const socs2 = Object.keys(curve2).map(Number).sort((a, b) => a - b);
+            const powers2 = socs2.map(soc => curve2[soc].powerKw);
+            chartSeries.push({ name: name2, data: socs2.map((soc, i) => [soc, powers2[i]]), color: 'blue' });
+        }
+        Highcharts.chart('curveChartCombined', {
+            chart: { type: 'line', height: 350 },
+            title: { text: null },
+            xAxis: { title: { text: 'Charge Level (%)' }, min: 0, max: 100 },
+            yAxis: { title: { text: 'Charging Speed (kW)' } },
+            series: chartSeries,
+            tooltip: { valueDecimals: 1, valueSuffix: ' kW' }
+        });
+    }
+
+    createTimelineChart(path, params, chartId) {
+        const chargerPositions = this.chargerPositions;
+        const usedChargers = path.filter(step => step.action === 'driveAndCharge').map(step => step.toPosition);
+        const timelineData = chargerPositions.map(pos => ({
+            x: pos,
+            y: 1,
+            marker: {
+                symbol: usedChargers.includes(pos) ? 'circle' : 'diamond',
+                fillColor: usedChargers.includes(pos) ? '#2ecc71' : '#ccc',
+                lineColor: '#333',
+                radius: usedChargers.includes(pos) ? 8 : 6
+            },
+            chargerUsed: usedChargers.includes(pos)
+        }));
+
+        // Add start and end points
+        const startPoint = {
+            x: 0,
+            y: 1,
+            marker: {
+                symbol: 'circle',
+                fillColor: '#3498db',
+                lineColor: '#222',
+                radius: 10
+            }
+        };
+
+        const endPoint = {
+            x: params.drivingDistance,
+            y: 1,
+            marker: {
+                symbol: 'circle',
+                fillColor: '#8e44ad',
+                lineColor: '#222',
+                radius: 10
+            }
+        };
+
+        Highcharts.chart(chartId, {
+            chart: { type: 'scatter', height: 120 },
+            title: { text: null },
+            xAxis: {
+                title: { text: 'Position Along Route (miles)' },
+                min: 0,
+                max: params.drivingDistance,
+                tickInterval: params.chargerSpacing
+            },
+            yAxis: { visible: false, min: 0, max: 2 },
+            series: [{
+                name: 'Chargers',
+                data: timelineData,
+                showInLegend: false,
+                tooltip: {
+                    pointFormatter: function() {
+                        return this.chargerUsed ? 'Charged here' : 'Skipped';
+                    }
+                }
+            }, {
+                name: 'Start',
+                data: [startPoint],
+                color: '#3498db',
+                showInLegend: false,
+                tooltip: {
+                    pointFormatter: function() {
+                        return 'Trip Start';
+                    }
+                }
+            }, {
+                name: 'End',
+                data: [endPoint],
+                color: '#8e44ad',
+                showInLegend: false,
+                tooltip: {
+                    pointFormatter: function() {
+                        return 'Trip End';
+                    }
+                }
+            }]
+        });
+    }
+
+    createChargerSummaryTable(path, params, tableId) {
+        const chargerPositions = this.chargerPositions;
+        let tableHtml = `<table style="width:100%; border-collapse:collapse;">
+            <tr>
+                <th style="padding:8px; border-bottom:1px solid #eee;">Charger Position (miles)</th>
+                <th style="padding:8px; border-bottom:1px solid #eee;">Used?</th>
+                <th style="padding:8px; border-bottom:1px solid #eee;">Charge Level Before</th>
+                <th style="padding:8px; border-bottom:1px solid #eee;">Charge Level After</th>
+                <th style="padding:8px; border-bottom:1px solid #eee;">Charging Time (min)</th>
+            </tr>`;
+        chargerPositions.forEach(pos => {
+            const step = path.find(s => s.action === 'driveAndCharge' && s.toPosition === pos);
+            tableHtml += `<tr>
+                <td style="padding:8px; border-bottom:1px solid #eee;">${pos}</td>
+                <td style="padding:8px; border-bottom:1px solid #eee; text-align:center;">
+                    ${step ? '✅' : '❌'}
+                </td>
+                <td style="padding:8px; border-bottom:1px solid #eee;">${step ? step.socAtCharger.toFixed(1) : '-'}</td>
+                <td style="padding:8px; border-bottom:1px solid #eee;">${step ? step.socAfterCharge.toFixed(1) : '-'}</td>
+                <td style="padding:8px; border-bottom:1px solid #eee;">${step ? (step.chargeTimeHours * 60).toFixed(1) : '-'}</td>
+            </tr>`;
+        });
+        tableHtml += `</table>`;
+        document.getElementById(tableId).innerHTML = tableHtml;
+    }
+}
+
+/**
+ * ====================================================================================
+ * APPLICATION INITIALIZATION & MAIN ENTRY POINT
+ * ====================================================================================
+ * 
+ * This section runs when the webpage loads and sets up the application
+ */
+
+// Initialize the app and DP explorer controls when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    // Create a new instance of the EV charging optimizer
+    const optimizer = new EvChargingOptimizer();
+    
+    // Make optimizer globally accessible for chart tooltips
+    window.optimizer = optimizer;
+    
+    // Set up all the interactive controls and event handlers
+    optimizer.setupDpExplorerControls();
+    
+    // Note: All calculation logic is triggered by user interaction through the UI
+    // The main "Calculate" button calls optimizer.calculateAndDisplayResults()
+});
+</script>
+</body>
+</html>
