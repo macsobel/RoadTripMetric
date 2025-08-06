@@ -1311,71 +1311,85 @@ class EvChargingOptimizer {
     }
 
     /**
-     * Find the absolute minimum number of charging stops required
+     * Find the absolute minimum number of charging stops required using a simpler, correct approach
      * @param {Object} params - Trip parameters
      * @returns {number} Minimum stops needed, or -1 if impossible
      */
     findMinimumStopsRequired(params) {
         const { drivingDistance, startSoc, minSoc, endRangeRequirement, chargerSpacing } = params;
         
-        // Setup charger positions
+        // Calculate maximum range per charge cycle
+        const maxUsableRange = this.socToMiles(100 - minSoc, this.vehicleRange);
+        const maxProgressPerCycle = maxUsableRange - params.chargerDetourDistance;
+        
+        // Check if trip is possible without charging
+        const initialRange = this.socToMiles(startSoc, this.vehicleRange);
+        const rangeNeededForTrip = drivingDistance + endRangeRequirement;
+        
+        if (initialRange >= rangeNeededForTrip) {
+            return 0;
+        }
+        
+        // Calculate remaining distance after using initial charge
+        const initialUsableRange = this.socToMiles(startSoc - minSoc, this.vehicleRange);
+        const remainingAfterInitial = drivingDistance + endRangeRequirement - initialUsableRange;
+        
+        if (remainingAfterInitial <= 0) {
+            return 0; // No charging needed
+        }
+        
+        // Calculate minimum stops needed for remaining distance
+        const stopsNeeded = Math.ceil(remainingAfterInitial / maxProgressPerCycle);
+        
+        // Verify this is actually achievable with the charger spacing
         const chargerPositions = [];
         for (let pos = chargerSpacing; pos < drivingDistance; pos += chargerSpacing) {
             chargerPositions.push(pos);
         }
         
-        const endSocRequired = Math.max(endRangeRequirement / this.vehicleRange * 100, minSoc);
-        
-        // Try with greedy approach to find minimum stops
-        let currentPosition = 0;
+        // Simple greedy verification: can we actually reach chargers with this strategy?
+        let currentPos = 0;
         let currentSoc = startSoc;
-        let stopsUsed = 0;
-        const maxStopsToTry = Math.ceil(drivingDistance / (this.vehicleRange * 0.4)); // Conservative upper bound
+        let actualStops = 0;
         
-        while (currentPosition < drivingDistance && stopsUsed <= maxStopsToTry) {
-            // Check if we can reach destination with current charge
-            const remainingDistance = drivingDistance - currentPosition;
-            const socNeededForDestination = remainingDistance / this.vehicleRange * 100 + endSocRequired;
+        while (currentPos < drivingDistance) {
+            // Check if we can reach destination
+            const currentRange = this.socToMiles(currentSoc, this.vehicleRange);
+            const distanceToEnd = drivingDistance - currentPos;
             
-            if (currentSoc >= socNeededForDestination) {
-                // Can reach destination!
-                return stopsUsed;
+            if (currentRange >= distanceToEnd + endRangeRequirement) {
+                break;
             }
             
-            // Find the farthest charger we can reach
-            const currentRangeMiles = this.socToMiles(currentSoc, this.vehicleRange);
-            const minRangeMiles = this.socToMiles(minSoc, this.vehicleRange);
-            const usableRange = currentRangeMiles - minRangeMiles;
+            // Find next reachable charger
+            const usableRange = this.socToMiles(currentSoc - minSoc, this.vehicleRange);
+            let nextCharger = null;
             
-            let farthestCharger = null;
             for (const chargerPos of chargerPositions) {
-                if (chargerPos <= currentPosition) continue;
-                
-                const distanceToCharger = chargerPos - currentPosition;
-                const detourDistance = params.chargerDetourDistance;
-                const totalDistance = distanceToCharger + detourDistance;
-                
-                if (totalDistance <= usableRange) {
-                    farthestCharger = chargerPos;
+                if (chargerPos > currentPos) {
+                    const distanceWithDetour = (chargerPos - currentPos) + params.chargerDetourDistance;
+                    if (distanceWithDetour <= usableRange) {
+                        nextCharger = chargerPos;
+                    } else {
+                        break; // Can't reach this or any further chargers
+                    }
                 }
             }
             
-            if (!farthestCharger) {
-                return -1; // No reachable charger
+            if (!nextCharger) {
+                return -1;
             }
             
-            // Move to farthest charger and charge to 100% (for minimum stops calculation)
-            const distanceToCharger = farthestCharger - currentPosition;
-            const detourDistance = params.chargerDetourDistance;
-            const totalTravelDistance = distanceToCharger + detourDistance;
-            const socAtCharger = currentSoc - (totalTravelDistance / this.vehicleRange * 100);
+            // Go to charger and charge to 100%
+            const travelDistance = (nextCharger - currentPos) + params.chargerDetourDistance;
+            const socUsed = this.milesToSoc(travelDistance, this.vehicleRange);
             
-            currentPosition = farthestCharger;
-            currentSoc = 100; // Charge to max for minimum stops analysis
-            stopsUsed++;
+            currentPos = nextCharger;
+            currentSoc = 100; // Charge to full for minimum stops
+            actualStops++;
         }
         
-        return currentPosition >= drivingDistance ? stopsUsed : -1;
+        return actualStops;
     }
 
     /**
