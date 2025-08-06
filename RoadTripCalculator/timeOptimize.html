@@ -155,6 +155,28 @@
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            table-layout: fixed; /* Force consistent column widths */
+        }
+        
+        /* Consistent column widths across all summary tables */
+        .summary-table th:first-child,
+        .summary-table td:first-child {
+            width: 35%; /* Labels column */
+        }
+        
+        .summary-table th:nth-child(2),
+        .summary-table td:nth-child(2) {
+            width: 32.5%; /* Vehicle 1 / Data column */
+        }
+        
+        .summary-table th:nth-child(3),
+        .summary-table td:nth-child(3) {
+            width: 32.5%; /* Vehicle 2 column (when present) */
+        }
+        
+        /* Special handling for single-column scenario table (optimization strategy) */
+        #optimizationTable td[colspan="2"] {
+            width: 65%; /* Spans both data columns */
         }
         .summary-table th, .summary-table td {
             padding: 12px 16px;
@@ -243,8 +265,24 @@
                 font-size: 1rem;
             }
             .summary-table th, .summary-table td {
-                padding: 7px;
-                font-size: 0.95rem;
+                padding: 8px 6px;
+                font-size: 0.9rem;
+            }
+            
+            /* Maintain proportional column widths on mobile */
+            .summary-table th:first-child,
+            .summary-table td:first-child {
+                width: 40%; /* Slightly wider for labels on mobile */
+            }
+            
+            .summary-table th:nth-child(2),
+            .summary-table td:nth-child(2) {
+                width: 30%; /* Adjust for mobile */
+            }
+            
+            .summary-table th:nth-child(3),
+            .summary-table td:nth-child(3) {
+                width: 30%; /* Adjust for mobile */
             }
             .charger-positions {
                 padding: 4px;
@@ -286,6 +324,20 @@
                     <div style="display:flex; align-items:center; gap:8px;">
                         <input type="file" id="xmlFile2" accept=".xml" style="margin-top: 5px;" disabled>
                         <button id="clearXml2" type="button" title="Remove Vehicle 2" style="background:none;border:none;font-size:1.2em;cursor:pointer; display:none;">❌</button>
+                    </div>
+                </div>
+                <!-- Optimization Strategy -->
+                <div class="control-group">
+                    <label>Optimization Strategy</label>
+                    <div style="margin-top: 8px;">
+                        <div style="margin-bottom: 8px;">
+                            <input type="radio" id="strategyTime" name="optimizationStrategy" value="time" checked>
+                            <label for="strategyTime" style="display: inline; margin-left: 6px; margin-bottom: 0; font-weight: normal;">Minimize Total Travel Time</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="strategyStops" name="optimizationStrategy" value="stops">
+                            <label for="strategyStops" style="display: inline; margin-left: 6px; margin-bottom: 0; font-weight: normal;">Minimize Charging Stops</label>
+                        </div>
                     </div>
                 </div>
                 <!-- Trip Controls -->
@@ -346,7 +398,14 @@
                 <div id="errorMessage" class="error hidden"></div>
                 <!-- Results content -->
                 <div id="resultsContent" class="hidden">
-                    <!-- Scenario Summary -->
+                    <!-- Optimization Strategy Summary -->
+                    <div class="summary-section">
+                        <h3 class="section-title">Scenario</h3>
+                        <table class="summary-table" id="optimizationTable">
+                            <!-- Will be populated by JavaScript -->
+                        </table>
+                    </div>
+                    <!-- Vehicle Summary -->
                     <div class="summary-section">
                         <h3 class="section-title">Vehicle Summary</h3>
                         <table class="summary-table" id="scenarioTable">
@@ -355,7 +414,7 @@
                     </div>
                     <!-- Trip Results -->
                     <div class="summary-section">
-                        <h3 class="section-title">Trip Results</h3>
+                        <h3 class="section-title">Vehicle Results</h3>
                         <table class="summary-table" id="resultsTable">
                             <!-- Will be populated by JavaScript -->
                         </table>
@@ -671,6 +730,7 @@ class EvChargingOptimizer {
      * @returns {Object} Parameters object with all trip settings
      */
     getParameters() {
+        const strategyRadio = document.querySelector('input[name="optimizationStrategy"]:checked');
         return {
             drivingDistance: parseFloat(document.getElementById('drivingDistance').value),
             chargerDetourDistance: parseFloat(document.getElementById('chargerDetourDistance').value),
@@ -679,7 +739,8 @@ class EvChargingOptimizer {
             citySpeed: this.citySpeed,
             startSoc: parseFloat(document.getElementById('startSoc').value),
             minSoc: parseFloat(document.getElementById('minSoc').value),
-            chargerSpacing: parseFloat(document.getElementById('chargerSpacing').value)
+            chargerSpacing: parseFloat(document.getElementById('chargerSpacing').value),
+            optimizationStrategy: strategyRadio ? strategyRadio.value : 'time'
         };
     }
 
@@ -1188,6 +1249,315 @@ class EvChargingOptimizer {
         });
     }
 
+    /**
+     * Strategy-aware optimization router
+     * @param {Object} params - Trip parameters including optimization strategy
+     * @returns {Object} Optimization results with strategy metadata
+     */
+    optimizeWithStrategy(params) {
+        let result;
+        
+        if (params.optimizationStrategy === 'stops') {
+            result = this.optimizeMinimumStops(params);
+        } else {
+            result = this.optimizeChargingStrategy(params);
+        }
+
+        // Add strategy metadata to results
+        if (result && !result.error && !result.path || (result.path && result.path.length > 0)) {
+            result.strategyUsed = params.optimizationStrategy === 'stops' ? 'Minimize Charging Stops' : 'Minimize Total Travel Time';
+        }
+
+        return result;
+    }
+
+    /**
+     * START MODULE FOR MINIMIZING STOP FUNCTIONALITY
+     * Lexicographic optimization: minimize stops first, then minimize time
+     * @param {Object} params - Trip parameters
+     * @returns {Object} Optimization results
+     */
+    optimizeMinimumStops(params) {
+        const { drivingDistance, startSoc, minSoc, endRangeRequirement } = params;
+        
+        // Quick feasibility check - can we do the trip at all?
+        const endSocRequired = endRangeRequirement / this.vehicleRange * 100;
+        const effectiveEndSoc = Math.max(endSocRequired, minSoc);
+        
+        // Try with zero stops first
+        const finalSocWithoutCharging = startSoc - (drivingDistance / this.vehicleRange * 100);
+        if (finalSocWithoutCharging >= effectiveEndSoc) {
+            // Trip possible without charging!
+            return {
+                optimalTime: this.calculateSimpleTravelTime(drivingDistance, params),
+                path: [{
+                    action: 'driveToEnd',
+                    fromPosition: 0,
+                    toPosition: drivingDistance,
+                    socStart: startSoc,
+                    socEnd: finalSocWithoutCharging
+                }]
+            };
+        }
+        
+        // STAGE 1: Find minimum number of stops needed
+        const minStopsNeeded = this.findMinimumStopsRequired(params);
+        if (minStopsNeeded === -1) {
+            return { error: 'No feasible solution found with minimum stops strategy' };
+        }
+        
+        // STAGE 2: Among all solutions with minimum stops, find the one with minimum time
+        return this.optimizeTimeWithFixedStops(params, minStopsNeeded);
+    }
+
+    /**
+     * Find the absolute minimum number of charging stops required
+     * @param {Object} params - Trip parameters
+     * @returns {number} Minimum stops needed, or -1 if impossible
+     */
+    findMinimumStopsRequired(params) {
+        const { drivingDistance, startSoc, minSoc, endRangeRequirement, chargerSpacing } = params;
+        
+        // Setup charger positions
+        const chargerPositions = [];
+        for (let pos = chargerSpacing; pos < drivingDistance; pos += chargerSpacing) {
+            chargerPositions.push(pos);
+        }
+        
+        const endSocRequired = Math.max(endRangeRequirement / this.vehicleRange * 100, minSoc);
+        
+        // Try with greedy approach to find minimum stops
+        let currentPosition = 0;
+        let currentSoc = startSoc;
+        let stopsUsed = 0;
+        const maxStopsToTry = Math.ceil(drivingDistance / (this.vehicleRange * 0.4)); // Conservative upper bound
+        
+        while (currentPosition < drivingDistance && stopsUsed <= maxStopsToTry) {
+            // Check if we can reach destination with current charge
+            const remainingDistance = drivingDistance - currentPosition;
+            const socNeededForDestination = remainingDistance / this.vehicleRange * 100 + endSocRequired;
+            
+            if (currentSoc >= socNeededForDestination) {
+                // Can reach destination!
+                return stopsUsed;
+            }
+            
+            // Find the farthest charger we can reach
+            const currentRangeMiles = this.socToMiles(currentSoc, this.vehicleRange);
+            const minRangeMiles = this.socToMiles(minSoc, this.vehicleRange);
+            const usableRange = currentRangeMiles - minRangeMiles;
+            
+            let farthestCharger = null;
+            for (const chargerPos of chargerPositions) {
+                if (chargerPos <= currentPosition) continue;
+                
+                const distanceToCharger = chargerPos - currentPosition;
+                const detourDistance = params.chargerDetourDistance;
+                const totalDistance = distanceToCharger + detourDistance;
+                
+                if (totalDistance <= usableRange) {
+                    farthestCharger = chargerPos;
+                }
+            }
+            
+            if (!farthestCharger) {
+                return -1; // No reachable charger
+            }
+            
+            // Move to farthest charger and charge to 100% (for minimum stops calculation)
+            const distanceToCharger = farthestCharger - currentPosition;
+            const detourDistance = params.chargerDetourDistance;
+            const totalTravelDistance = distanceToCharger + detourDistance;
+            const socAtCharger = currentSoc - (totalTravelDistance / this.vehicleRange * 100);
+            
+            currentPosition = farthestCharger;
+            currentSoc = 100; // Charge to max for minimum stops analysis
+            stopsUsed++;
+        }
+        
+        return currentPosition >= drivingDistance ? stopsUsed : -1;
+    }
+
+    /**
+     * Optimize for minimum time using exactly the specified number of stops
+     * @param {Object} params - Trip parameters
+     * @param {number} requiredStops - Exact number of stops to use
+     * @returns {Object} Optimization results
+     */
+    optimizeTimeWithFixedStops(params, requiredStops) {
+        // Use modified DP algorithm that only considers solutions with exactly requiredStops
+        const { drivingDistance, chargerSpacing } = params;
+        
+        // Setup charger positions
+        this.chargerPositions = [];
+        for (let pos = chargerSpacing; pos < drivingDistance; pos += chargerSpacing) {
+            this.chargerPositions.push(pos);
+        }
+        
+        // Use dynamic programming with an additional dimension for number of stops used
+        // dpTableStops[position][soc][stopsUsed] = minimum time
+        const dpTableStops = {};
+        const decisionsStops = {};
+        
+        const socStep = 0.5;
+        const minEndSoc = this.milesToSoc(params.endRangeRequirement, this.vehicleRange);
+        const startingSoc = Math.min(params.minSoc, minEndSoc);
+        const socLevels = [];
+        for (let soc = Math.floor(startingSoc * 2) / 2; soc <= 100; soc = +(soc + socStep).toFixed(2)) {
+            socLevels.push(+soc.toFixed(2));
+        }
+        
+        const positions = [0, ...this.chargerPositions, drivingDistance].sort((a, b) => a - b);
+        
+        // Initialize DP tables
+        positions.forEach(pos => {
+            dpTableStops[pos] = {};
+            decisionsStops[pos] = {};
+            socLevels.forEach(soc => {
+                dpTableStops[pos][soc] = {};
+                decisionsStops[pos][soc] = {};
+                for (let stops = 0; stops <= requiredStops; stops++) {
+                    dpTableStops[pos][soc][stops] = Infinity;
+                    decisionsStops[pos][soc][stops] = null;
+                }
+            });
+        });
+        
+        // Base case: destination with exactly requiredStops
+        socLevels.forEach(soc => {
+            if (soc >= minEndSoc) {
+                dpTableStops[drivingDistance][soc][requiredStops] = 0.0;
+            }
+        });
+        
+        // Fill DP table backwards
+        for (let i = positions.length - 2; i >= 0; i--) {
+            const currentPos = positions[i];
+            
+            socLevels.forEach(currentSoc => {
+                for (let stopsUsed = 0; stopsUsed <= requiredStops; stopsUsed++) {
+                    // Option 1: Drive directly to destination (no additional stops)
+                    if (stopsUsed === requiredStops && this.canReachPosition(currentPos, currentSoc, drivingDistance, params, true)) {
+                        const distance = drivingDistance - currentPos;
+                        const travelTime = this.calculateTravelTime(distance, false, params);
+                        const finalSoc = currentSoc - this.milesToSoc(distance, this.vehicleRange);
+                        
+                        if (finalSoc >= minEndSoc && travelTime < dpTableStops[currentPos][currentSoc][stopsUsed]) {
+                            dpTableStops[currentPos][currentSoc][stopsUsed] = travelTime;
+                            decisionsStops[currentPos][currentSoc][stopsUsed] = ['driveToEnd', drivingDistance, finalSoc];
+                        }
+                    }
+                    
+                    // Option 2: Drive to charger and charge (if we haven't used all stops yet)
+                    if (stopsUsed < requiredStops) {
+                        const reachableChargers = this.getReachableChargers(currentPos, currentSoc, params);
+                        reachableChargers.forEach(nextCharger => {
+                            const distanceToCharger = (nextCharger - currentPos) + params.chargerDetourDistance;
+                            const travelTimeToCharger = this.calculateTravelTime(nextCharger - currentPos, true, params);
+                            const socAtCharger = currentSoc - this.milesToSoc(distanceToCharger, this.vehicleRange);
+                            
+                            if (socAtCharger < params.minSoc) return;
+                            
+                            // Try different charging levels
+                            for (let chargeToSoc = Math.ceil(socAtCharger * 2) / 2 + socStep; chargeToSoc <= 100; chargeToSoc = +(chargeToSoc + socStep).toFixed(2)) {
+                                const chargingTime = this.calculateChargingTime(socAtCharger, chargeToSoc);
+                                const nextStopsUsed = stopsUsed + 1;
+                                
+                                if (dpTableStops[nextCharger] && dpTableStops[nextCharger][chargeToSoc] && 
+                                    dpTableStops[nextCharger][chargeToSoc][nextStopsUsed] !== undefined && 
+                                    dpTableStops[nextCharger][chargeToSoc][nextStopsUsed] !== Infinity) {
+                                    
+                                    const totalTime = travelTimeToCharger + chargingTime + dpTableStops[nextCharger][chargeToSoc][nextStopsUsed];
+                                    
+                                    if (totalTime < dpTableStops[currentPos][currentSoc][stopsUsed]) {
+                                        dpTableStops[currentPos][currentSoc][stopsUsed] = totalTime;
+                                        decisionsStops[currentPos][currentSoc][stopsUsed] = ['charge', nextCharger, chargeToSoc];
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        
+        // Extract solution with exactly requiredStops
+        function findClosestSoc(target, socArr) {
+            return socArr.reduce((prev, curr) => Math.abs(curr - target) < Math.abs(prev - target) ? curr : prev);
+        }
+        
+        const optimalStartSoc = findClosestSoc(params.startSoc, socLevels);
+        const optimalTime = dpTableStops[0][optimalStartSoc][0]; // Start with 0 stops used
+        
+        if (optimalTime === Infinity) {
+            return { error: `No feasible solution found with exactly ${requiredStops} stops` };
+        }
+        
+        // Reconstruct path
+        const path = [];
+        let currentPos = 0;
+        let currentSoc = optimalStartSoc;
+        let currentStopsUsed = 0;
+        
+        while (currentPos < drivingDistance) {
+            currentSoc = findClosestSoc(currentSoc, socLevels);
+            const decision = decisionsStops[currentPos][currentSoc][currentStopsUsed];
+            if (!decision) break;
+            
+            const [action, nextPos, chargeLevel] = decision;
+            
+            if (action === 'driveToEnd') {
+                path.push({
+                    action: 'driveToEnd',
+                    fromPosition: currentPos,
+                    toPosition: drivingDistance,
+                    socStart: currentSoc,
+                    socEnd: currentSoc - this.milesToSoc(drivingDistance - currentPos, this.vehicleRange)
+                });
+                break;
+            } else if (action === 'charge') {
+                const distance = (nextPos - currentPos) + params.chargerDetourDistance;
+                const socAtCharger = currentSoc - this.milesToSoc(distance, this.vehicleRange);
+                path.push({
+                    action: 'driveAndCharge',
+                    fromPosition: currentPos,
+                    toPosition: nextPos,
+                    socStart: currentSoc,
+                    socAtCharger: socAtCharger,
+                    socAfterCharge: chargeLevel,
+                    chargeTimeHours: this.calculateChargingTime(socAtCharger, chargeLevel)
+                });
+                currentPos = nextPos;
+                currentSoc = chargeLevel;
+                currentStopsUsed++;
+            }
+        }
+        
+        return { optimalTime, path };
+    }
+
+    /**
+     * Calculate travel time for a given distance (simple version for minimum stops strategy)
+     * @param {number} distance - Distance in miles
+     * @param {Object} params - Parameters containing speed information
+     * @returns {number} Travel time in hours
+     */
+    calculateSimpleTravelTime(distance, params) {
+        // Assume highway speed for simplicity
+        return distance / params.highwaySpeed;
+    }
+
+    /**
+     * Calculate battery capacity from the charging curve
+     * @returns {number} Battery capacity in kWh
+     */
+    calculateBatteryCapacity() {
+        // Find the energy at 100% vs 0% from the charging curve
+        const energyAt100 = this.chargingCurve[100]?.energyKwh || 100;
+        const energyAt0 = this.chargingCurve[0]?.energyKwh || 0;
+        return energyAt100 - energyAt0;
+    }
+
     optimizeTrip() {
         if (!this.chargingCurve1) {
             this.showError('Please upload at least one XML file.');
@@ -1196,10 +1566,12 @@ class EvChargingOptimizer {
         setTimeout(() => {
             try {
                 const params = this.getParameters();
-                // Vehicle 1
+                
+                // Vehicle 1 - Use strategy-aware optimization
                 this.vehicleRange = this.vehicleRange1;
                 this.chargingCurve = this.chargingCurve1;
-                const result1 = this.optimizeChargingStrategy(params);
+                const result1 = this.optimizeWithStrategy(params);
+                
                 let result2 = null;
                 if (
                     this.chargingCurve2 &&
@@ -1207,9 +1579,10 @@ class EvChargingOptimizer {
                     this.vehicleName2 &&
                     this.vehicleRange2
                 ) {
+                    // Vehicle 2 - Use strategy-aware optimization
                     this.vehicleRange = this.vehicleRange2;
                     this.chargingCurve = this.chargingCurve2;
-                    result2 = this.optimizeChargingStrategy(params);
+                    result2 = this.optimizeWithStrategy(params);
                 }
                 this.displayComparisonResults(result1, result2, params);
             } catch (error) {
@@ -1232,17 +1605,19 @@ class EvChargingOptimizer {
             return;
         }
 
-        // Scenario Table
-        let scenarioHtml = `
-            <tr><th>Vehicle Model 1</th><td>${this.vehicleName1}</td></tr>
-            <tr><th>Vehicle Range 1 (miles)</th><td>${this.vehicleRange1}</td></tr>
+        // Optimization Strategy Table
+        let optimizationHtml = `
+            <tr><th>Optimization Strategy</th><td colspan="2">${result1.strategyUsed || 'Minimize Total Travel Time'}</td></tr>
         `;
-        if (result2) {
-            scenarioHtml += `
-                <tr><th>Vehicle Model 2</th><td>${this.vehicleName2}</td></tr>
-                <tr><th>Vehicle Range 2 (miles)</th><td>${this.vehicleRange2}</td></tr>
-            `;
-        }
+        document.getElementById('optimizationTable').innerHTML = optimizationHtml;
+
+        // Vehicle Summary Table  
+        let scenarioHtml = `<tr><th></th><th>${this.vehicleName1}</th>`;
+        if (result2) scenarioHtml += `<th>${this.vehicleName2}</th>`;
+        scenarioHtml += `</tr>`;
+        scenarioHtml += `<tr><th>Vehicle Range</th><td>${this.vehicleRange1}</td>`;
+        if (result2) scenarioHtml += `<td>${this.vehicleRange2}</td>`;
+        scenarioHtml += `</tr>`;
         document.getElementById('scenarioTable').innerHTML = scenarioHtml;
 
         // Results Table
