@@ -302,6 +302,35 @@
             flex: 1 1 350px;
             min-width: 300px;
         }
+        .vehicle-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #2d3a4a;
+            background: white;
+            margin-top: 5px;
+        }
+        .vehicle-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .vehicle-select:disabled {
+            background: #f8fafc;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+        .loading-indicator {
+            color: #667eea;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+        .hidden-file-input {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -311,20 +340,26 @@
             <!-- Controls Panel -->
             <div class="controls-panel">
                 <h2>Trip Parameters</h2>
-                <!-- File Upload -->
+                <!-- Vehicle Selection -->
                 <div class="control-group">
-                    <label for="xmlFile1">Vehicle 1 XML File</label>
+                    <label for="vehicleSelect1">Vehicle 1</label>
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <input type="file" id="xmlFile1" accept=".xml" style="margin-top: 5px;">
+                        <select id="vehicleSelect1" class="vehicle-select">
+                            <option value="">Loading vehicles...</option>
+                        </select>
                         <button id="clearXml1" type="button" title="Remove Vehicle 1" style="background:none;border:none;font-size:1.2em;cursor:pointer; display:none;">❌</button>
                     </div>
+                    <input type="file" id="xmlFile1" accept=".xml" class="hidden-file-input">
                 </div>
                 <div class="control-group">
-                    <label for="xmlFile2">Vehicle 2 XML File</label>
+                    <label for="vehicleSelect2">Vehicle 2</label>
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <input type="file" id="xmlFile2" accept=".xml" style="margin-top: 5px;" disabled>
+                        <select id="vehicleSelect2" class="vehicle-select" disabled>
+                            <option value="">Loading vehicles...</option>
+                        </select>
                         <button id="clearXml2" type="button" title="Remove Vehicle 2" style="background:none;border:none;font-size:1.2em;cursor:pointer; display:none;">❌</button>
                     </div>
+                    <input type="file" id="xmlFile2" accept=".xml" class="hidden-file-input">
                 </div>
                 <!-- Optimization Strategy -->
                 <div class="control-group">
@@ -391,7 +426,7 @@
                 <!-- Default message -->
                 <div id="defaultMessage">
                     <p style="text-align: center; color: #666; margin-top: 50px;">
-                        Upload at least one Vehicle XML file and click "Show Results" to see results.
+                        Select at least one vehicle and click "Show Results" to see results.
                     </p>
                 </div>
                 <!-- Error message -->
@@ -523,6 +558,9 @@ class EvChargingOptimizer {
         this.dpExplorerVehicleIdx = 0;
         this.dpExplorerControlsSetup = false;
         
+        // GitHub vehicle data cache
+        this.githubVehicles = [];
+        
         // *** EDITABLE SCENARIO ASSUMPTIONS ***
         // Travel constants (could be made configurable in future)
         this.highwaySpeed = 70;  // mph
@@ -530,6 +568,7 @@ class EvChargingOptimizer {
         
         // Initialize the application
         this.setupEventListeners();
+        this.loadGitHubVehicles();
     }
 
     /**
@@ -559,13 +598,21 @@ class EvChargingOptimizer {
             });
         });
         
-        // File upload events
+        // Vehicle dropdown events
+        document.getElementById('vehicleSelect1').addEventListener('change', (event) => {
+            this.handleVehicleSelection(1, event.target.value);
+        });
+        document.getElementById('vehicleSelect2').addEventListener('change', (event) => {
+            this.handleVehicleSelection(2, event.target.value);
+        });
+        
+        // File upload events (for fallback)
         document.getElementById('xmlFile1').addEventListener('change', (event) => {
-            // Enable Vehicle 2 XML input as soon as a file is selected for Vehicle 1
-            document.getElementById('xmlFile2').disabled = !event.target.files.length;
             this.handleFileUpload(1, event);
         });
-        document.getElementById('xmlFile2').addEventListener('change', this.handleFileUpload.bind(this, 2));
+        document.getElementById('xmlFile2').addEventListener('change', (event) => {
+            this.handleFileUpload(2, event);
+        });
         
         // Main action buttons
         document.getElementById('optimizeBtn').addEventListener('click', this.optimizeTrip.bind(this));
@@ -601,6 +648,7 @@ class EvChargingOptimizer {
             this.vehicleName1 = null;
             this.vehicleRange1 = null;
             this.chargingCurve1 = {};
+            document.getElementById('vehicleSelect1').value = '';
             document.getElementById('xmlFile1').value = '';
             document.getElementById('clearXml1').style.display = 'none';
         } else {
@@ -608,6 +656,7 @@ class EvChargingOptimizer {
             this.vehicleName2 = null;
             this.vehicleRange2 = null;
             this.chargingCurve2 = {};
+            document.getElementById('vehicleSelect2').value = '';
             document.getElementById('xmlFile2').value = '';
             document.getElementById('clearXml2').style.display = 'none';
         }
@@ -616,13 +665,17 @@ class EvChargingOptimizer {
         if (!this.chargingCurve1 || Object.keys(this.chargingCurve1).length === 0) {
             // No vehicle 1, disable optimization
             document.getElementById('optimizeBtn').disabled = true;
-            document.getElementById('optimizeBtn').textContent = 'Upload Vehicle XML File Above';
+            document.getElementById('optimizeBtn').textContent = 'Select Vehicle Above';
+            // Disable vehicle 2 selection if no vehicle 1
+            document.getElementById('vehicleSelect2').disabled = true;
         } else {
             // Vehicle 1 exists, enable optimization
             document.getElementById('optimizeBtn').disabled = false;
             document.getElementById('optimizeBtn').textContent = this.chargingCurve2 && Object.keys(this.chargingCurve2).length > 0
                 ? 'Compare Vehicles'  // Both vehicles loaded
                 : 'Show Results';     // Only vehicle 1 loaded
+            // Enable vehicle 2 selection if vehicle 1 exists
+            document.getElementById('vehicleSelect2').disabled = false;
         }
         
         // Hide results and show default message
@@ -652,6 +705,8 @@ class EvChargingOptimizer {
                         document.getElementById('optimizeBtn').textContent = this.chargingCurve2 && Object.keys(this.chargingCurve2).length > 0
                             ? 'Compare Vehicles'
                             : 'Show Results';
+                        // Enable vehicle 2 selection
+                        document.getElementById('vehicleSelect2').disabled = false;
                     } else {
                         // Show clear button and update button text for vehicle 2
                         document.getElementById('clearXml2').style.display = 'inline';
@@ -663,6 +718,151 @@ class EvChargingOptimizer {
                 }
             };
             reader.readAsText(file);
+        }
+    }
+
+    /**
+     * Loads available vehicles from GitHub repository
+     */
+    async loadGitHubVehicles() {
+        try {
+            const apiUrl = 'https://api.github.com/repos/macsobel/RoadTripXML/contents/EVKX';
+            const response = await fetch(apiUrl);
+            const files = await response.json();
+            
+            // Filter XML files and get their info
+            const xmlFiles = files
+                .filter(file => file.name.endsWith('.xml'))
+                .map(file => ({
+                    filename: file.name,
+                    downloadUrl: file.download_url
+                }));
+            
+            // Fetch each XML file to get vehicle names
+            const vehiclePromises = xmlFiles.map(async file => {
+                try {
+                    const xmlResponse = await fetch(file.downloadUrl);
+                    const xmlContent = await xmlResponse.text();
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
+                    const nameElement = xmlDoc.querySelector('metadata name');
+                    const vehicleName = nameElement ? nameElement.textContent.trim() : file.filename;
+                    
+                    return {
+                        name: vehicleName,
+                        filename: file.filename,
+                        downloadUrl: file.downloadUrl,
+                        xmlContent: xmlContent
+                    };
+                } catch (error) {
+                    console.warn(`Failed to load ${file.filename}:`, error);
+                    return null;
+                }
+            });
+            
+            // Wait for all vehicles to load and filter out failed ones
+            const vehicles = (await Promise.all(vehiclePromises))
+                .filter(vehicle => vehicle !== null)
+                .sort((a, b) => a.name.localeCompare(b.name));
+            
+            this.githubVehicles = vehicles;
+            this.populateVehicleDropdowns();
+            
+        } catch (error) {
+            console.error('Failed to load GitHub vehicles:', error);
+            this.populateVehicleDropdowns(); // Populate with fallback only
+        }
+    }
+
+    /**
+     * Populates the vehicle dropdown menus
+     */
+    populateVehicleDropdowns() {
+        const dropdowns = ['vehicleSelect1', 'vehicleSelect2'];
+        
+        dropdowns.forEach(dropdownId => {
+            const dropdown = document.getElementById(dropdownId);
+            dropdown.innerHTML = '';
+            
+            // Add default option
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Select a vehicle...';
+            dropdown.appendChild(defaultOption);
+            
+            // Add GitHub vehicles
+            this.githubVehicles.forEach(vehicle => {
+                const option = document.createElement('option');
+                option.value = `github:${vehicle.filename}`;
+                option.textContent = vehicle.name;
+                dropdown.appendChild(option);
+            });
+            
+            // Add upload option
+            const uploadOption = document.createElement('option');
+            uploadOption.value = 'upload';
+            uploadOption.textContent = 'User XML File...';
+            dropdown.appendChild(uploadOption);
+        });
+        
+        // Update initial button state
+        document.getElementById('optimizeBtn').disabled = true;
+        document.getElementById('optimizeBtn').textContent = 'Select Vehicle Above';
+        document.getElementById('vehicleSelect2').disabled = true;
+    }
+
+    /**
+     * Handles vehicle selection from dropdown
+     * @param {number} vehicleNum - Which vehicle slot (1 or 2)
+     * @param {string} value - Selected value from dropdown
+     */
+    async handleVehicleSelection(vehicleNum, value) {
+        if (!value) {
+            // Empty selection - clear vehicle
+            this.clearVehicle(vehicleNum);
+            return;
+        }
+        
+        if (value === 'upload') {
+            // User wants to upload their own file
+            const fileInput = document.getElementById(`xmlFile${vehicleNum}`);
+            fileInput.click();
+            // Reset dropdown to empty selection
+            document.getElementById(`vehicleSelect${vehicleNum}`).value = '';
+            return;
+        }
+        
+        if (value.startsWith('github:')) {
+            // GitHub vehicle selected
+            const filename = value.substring(7); // Remove 'github:' prefix
+            const vehicle = this.githubVehicles.find(v => v.filename === filename);
+            
+            if (vehicle) {
+                try {
+                    // Load vehicle data from cached XML content
+                    this.loadChargingCurve(vehicle.xmlContent, vehicleNum);
+                    
+                    if (vehicleNum === 1) {
+                        // Show clear button and enable optimization for vehicle 1
+                        document.getElementById('clearXml1').style.display = 'inline';
+                        document.getElementById('optimizeBtn').disabled = false;
+                        document.getElementById('optimizeBtn').textContent = this.chargingCurve2 && Object.keys(this.chargingCurve2).length > 0
+                            ? 'Compare Vehicles'
+                            : 'Show Results';
+                        // Enable vehicle 2 selection
+                        document.getElementById('vehicleSelect2').disabled = false;
+                    } else {
+                        // Show clear button and update button text for vehicle 2
+                        document.getElementById('clearXml2').style.display = 'inline';
+                        document.getElementById('optimizeBtn').textContent = 'Compare Vehicles';
+                    }
+                    this.hideError();
+                } catch (error) {
+                    this.showError('Error loading vehicle: ' + error.message);
+                    // Reset dropdown on error
+                    document.getElementById(`vehicleSelect${vehicleNum}`).value = '';
+                }
+            }
         }
     }
 
