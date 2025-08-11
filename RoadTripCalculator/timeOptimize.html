@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EV Road Trip Calculator</title>
+    <title>EV Road Trip Metric</title>
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/highcharts-more.js"></script>
     <script src="https://code.highcharts.com/modules/annotations.js"></script>
@@ -456,7 +456,7 @@
                     </div>
                     <!-- Charts: Compare Vehicles Side-by-Side -->
                     <div class="chart-container">
-                        <div class="chart-title">Total Travel Time By Activity</div>
+                        <div class="chart-title">Travel Time By Activity</div>
                         <div id="timeChartCombined"></div>
                     </div>
                     <div class="chart-container">
@@ -1851,7 +1851,7 @@ class EvChargingOptimizer {
         resultsHtml += [
             ['Total Travel Time', this.formatTime(result1.optimalTime), result2 ? this.formatTime(result2.optimalTime) : null],
             ['Charging Stops', result1.path.filter(s => s.action === 'driveAndCharge').length, result2 ? result2.path.filter(s => s.action === 'driveAndCharge').length : null],
-            ['End Vehicle Range', `${endRange1.toFixed(1)} mi`, result2 ? `${endRange2.toFixed(1)} mi` : null]
+            ['Vehicle Range at Destination', `${endRange1.toFixed(1)} mi`, result2 ? `${endRange2.toFixed(1)} mi` : null]
         ].map(([label, v1, v2]) =>
             `<tr><th>${label}</th><td>${v1}</td>${result2 ? `<td>${v2}</td>` : ''}</tr>`
         ).join('');
@@ -2379,11 +2379,11 @@ class EvChargingOptimizer {
         const chargerPositions = this.chargerPositions;
         let tableHtml = `<table style="width:100%; border-collapse:collapse;">
             <tr>
-                <th style="padding:8px; border-bottom:1px solid #eee;">Charger Position (miles)</th>
+                <th style="padding:8px; border-bottom:1px solid #eee;">Charger Location (miles)</th>
                 <th style="padding:8px; border-bottom:1px solid #eee;">Used?</th>
-                <th style="padding:8px; border-bottom:1px solid #eee;">Charge Level Before</th>
-                <th style="padding:8px; border-bottom:1px solid #eee;">Charge Level After</th>
-                <th style="padding:8px; border-bottom:1px solid #eee;">Charging Time (min)</th>
+                <th style="padding:8px; border-bottom:1px solid #eee;">Arrival Charge Level (%)</th>
+                <th style="padding:8px; border-bottom:1px solid #eee;">Departure Charge Level (%)</th>
+                <th style="padding:8px; border-bottom:1px solid #eee;">Charging Time (minutes)</th>
             </tr>`;
         chargerPositions.forEach(pos => {
             const step = path.find(s => s.action === 'driveAndCharge' && s.toPosition === pos);
