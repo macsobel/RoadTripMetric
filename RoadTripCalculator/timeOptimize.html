@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EV Road Trip Metric</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://www.epa.gov/sites/all/modules/contrib/jquery_update/replace/ui/ui/minified/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://www.epa.gov/sites/all/modules/contrib/jquery_update/replace/ui/themes/base/minified/jquery-ui.min.css" />
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/highcharts-more.js"></script>
     <script src="https://code.highcharts.com/modules/annotations.js"></script>
@@ -387,6 +390,10 @@
                             <input type="radio" id="strategyStops" name="optimizationStrategy" value="stops">
                             <label for="strategyStops" style="display: inline; margin-left: 6px; margin-bottom: 0; font-weight: normal;">Minimize Charging Stops</label>
                         </div>
+                        <div style="margin-bottom: 8px;">
+                            <input type="radio" id="strategyConventional" name="optimizationStrategy" value="conventional">
+                            <label for="strategyConventional" style="display: inline; margin-left: 6px; margin-bottom: 0; font-weight: normal;">Conventional Charging</label>
+                        </div>
                     </div>
                 </div>
                 <!-- Trip Controls -->
@@ -418,11 +425,21 @@
                         <input type="number" id="startSoc" class="number-input" value="100" min="50" max="100" step="5">
                     </div>
                 </div>
-                <div class="control-group">
+                <div class="control-group" id="minSocGroup">
                     <label for="minSoc" title="What is the lowest charge level for vehicle during the trip (%)?">Minimum Charge Level (%)</label>
                     <div class="input-container">
                         <input type="range" id="minSocSlider" class="slider" min="5" max="30" value="10" step="1">
                         <input type="number" id="minSoc" class="number-input" value="10" min="5" max="30" step="1">
+                    </div>
+                </div>
+                <div class="control-group" id="chargingWindowGroup" style="display:none;">
+                    <label for="chargingWindowSlider">Conventional Charging Window (%)</label>
+                    <div class="input-container" style="flex-direction:column;align-items:stretch;">
+                        <div id="chargingWindowSlider" style="margin: 10px 0 6px 0;"></div>
+                        <div style="display:flex;justify-content:space-between;">
+                            <span>Min: <span id="chargingWindowMinLabel">10</span>%</span>
+                            <span>Max: <span id="chargingWindowMaxLabel">80</span>%</span>
+                        </div>
                     </div>
                 </div>
                 <div class="control-group">
@@ -518,7 +535,7 @@
                             </div>
                         </div>
                     </div>
-                                       <div class="chart-container">
+                    <div class="chart-container">
                         <div class="chart-title">Vehicle Charging Curve</div>
                         <div id="curveChartCombined"></div>
                     </div>
@@ -590,6 +607,26 @@ class EvChargingOptimizer {
      * This connects HTML elements to JavaScript functions
      */
     setupEventListeners() {
+        // jQuery UI dual-thumb slider for Conventional Charging Window
+        $(function() {
+            console.log('DEBUG: Initializing jQuery UI slider');
+            $("#chargingWindowSlider").slider({
+                range: true,
+                min: 5,
+                max: 100,
+                step: 5,
+                values: [10, 80],
+                slide: function(event, ui) {
+                    console.log('DEBUG: Slider values changed to:', ui.values);
+                    $("#chargingWindowMinLabel").text(ui.values[0]);
+                    $("#chargingWindowMaxLabel").text(ui.values[1]);
+                }
+            });
+            // Set initial label values
+            $("#chargingWindowMinLabel").text(10);
+            $("#chargingWindowMaxLabel").text(80);
+            console.log('DEBUG: Slider initialized with values:', $("#chargingWindowSlider").slider("values"));
+        });
         // List of controls that have both sliders and number inputs
         const controls = [
             'drivingDistance', 'chargerDetourDistance', 'endRangeRequirement',
@@ -632,6 +669,19 @@ class EvChargingOptimizer {
         document.getElementById('optimizeBtn').addEventListener('click', this.optimizeTrip.bind(this));
         document.getElementById('clearXml1').addEventListener('click', () => this.clearVehicle(1));
         document.getElementById('clearXml2').addEventListener('click', () => this.clearVehicle(2));
+
+        // Show/hide minSoc and charging window controls based on strategy
+        const strategyRadios = document.querySelectorAll('input[name="optimizationStrategy"]');
+        console.log('DEBUG: Found strategy radios:', strategyRadios.length);
+        strategyRadios.forEach(radio => {
+            console.log('DEBUG: Radio button:', radio.id, 'value:', radio.value);
+            radio.addEventListener('change', () => {
+                const isConventional = document.getElementById('strategyConventional').checked;
+                console.log('DEBUG: Strategy changed, isConventional:', isConventional);
+                document.getElementById('chargingWindowGroup').style.display = isConventional ? '' : 'none';
+                document.getElementById('minSocGroup').style.display = isConventional ? 'none' : '';
+            });
+        });
     }
 
     /**
@@ -945,17 +995,216 @@ class EvChargingOptimizer {
      */
     getParameters() {
         const strategyRadio = document.querySelector('input[name="optimizationStrategy"]:checked');
-        return {
+        console.log('DEBUG: Strategy radio found:', strategyRadio);
+        console.log('DEBUG: Strategy value:', strategyRadio ? strategyRadio.value : 'none');
+        
+        const params = {
             drivingDistance: parseFloat(document.getElementById('drivingDistance').value),
             chargerDetourDistance: parseFloat(document.getElementById('chargerDetourDistance').value),
             endRangeRequirement: parseFloat(document.getElementById('endRangeRequirement').value),
             highwaySpeed: this.highwaySpeed,
             citySpeed: this.citySpeed,
             startSoc: parseFloat(document.getElementById('startSoc').value),
-            minSoc: parseFloat(document.getElementById('minSoc').value),
             chargerSpacing: parseFloat(document.getElementById('chargerSpacing').value),
             optimizationStrategy: strategyRadio ? strategyRadio.value : 'time'
         };
+        if (params.optimizationStrategy === 'conventional') {
+            const sliderVals = $("#chargingWindowSlider").slider("values");
+            console.log('DEBUG: Slider values:', sliderVals);
+            params.chargingWindowMin = sliderVals[0];
+            params.chargingWindowMax = sliderVals[1];
+            params.minSoc = sliderVals[0]; // Use min from window for formulas
+            console.log('DEBUG: Set chargingWindowMin:', params.chargingWindowMin);
+            console.log('DEBUG: Set chargingWindowMax:', params.chargingWindowMax);
+        } else {
+            params.minSoc = parseFloat(document.getElementById('minSoc').value);
+        }
+        return params;
+    }
+
+    // Stub for the new algorithm
+    optimizeConventionalCharging(params) {
+        // Implements the "Conventional Charging" strategy as specified by user
+        
+        // Setup charger positions along the route (same as other algorithms)
+        this.chargerPositions = [];
+        for (let pos = params.chargerSpacing; pos < params.drivingDistance; pos += params.chargerSpacing) {
+            this.chargerPositions.push(pos);
+        }
+        
+        const log = [];
+        const windowMin = params.chargingWindowMin;
+        const windowMax = params.chargingWindowMax;
+        let soc = params.startSoc;
+        let position = 0;
+        const tripDistance = params.drivingDistance;
+        const detour = params.chargerDetourDistance;
+        const endRange = params.endRangeRequirement;
+        
+        let finished = false;
+        while (!finished) {
+            // 1. Check if destination is reachable (with end-of-trip min)
+            const milesToDest = tripDistance - position;
+            const socNeededToDest = this.milesToSoc(milesToDest + endRange, this.vehicleRange);
+            
+            if (soc >= socNeededToDest) {
+                // Can reach destination, drive there and finish
+                log.push({
+                    action: 'drive',
+                    from: position,
+                    to: tripDistance,
+                    actualDistance: milesToDest, // No detour for final destination
+                    socStart: soc,
+                    socEnd: soc - this.milesToSoc(milesToDest, this.vehicleRange),
+                    note: 'Drive to destination, trip complete.'
+                });
+                finished = true;
+                break;
+            }
+            
+            // 2. Find the furthest charger we can reach while maintaining windowMin
+            let furthestChargerIndex = -1;
+            let canReachAnyCharger = false;
+            
+            for (let i = 0; i < this.chargerPositions.length; i++) {
+                const chargerPos = this.chargerPositions[i];
+                if (chargerPos <= position) continue; // Skip chargers we've passed
+                
+                const milesToCharger = (chargerPos - position) + detour;
+                const socNeededToCharger = this.milesToSoc(milesToCharger, this.vehicleRange);
+                const socAfterDriveToCharger = soc - socNeededToCharger;
+                
+                if (socAfterDriveToCharger >= windowMin) {
+                    furthestChargerIndex = i;
+                    canReachAnyCharger = true;
+                } else {
+                    break; // Can't reach this charger, so can't reach any further ones
+                }
+            }
+            
+            if (!canReachAnyCharger) {
+                // Cannot reach any charger - this should not happen with proper planning
+                return { error: 'Cannot reach any charger from current position' };
+            }
+            
+            // 3. Drive to the furthest reachable charger
+            const targetChargerPos = this.chargerPositions[furthestChargerIndex];
+            const milesToTargetCharger = (targetChargerPos - position) + detour;
+            const socNeededToTargetCharger = this.milesToSoc(milesToTargetCharger, this.vehicleRange);
+            const socAfterDrive = soc - socNeededToTargetCharger;
+            
+            log.push({
+                action: 'drive',
+                from: position,
+                to: targetChargerPos,
+                actualDistance: milesToTargetCharger, // Include detour in actual distance
+                socStart: soc,
+                socEnd: socAfterDrive,
+                note: `Drive to charger at mile ${targetChargerPos}`
+            });
+            
+            soc = socAfterDrive;
+            position = targetChargerPos;
+            
+            // 4. Charge at this charger
+            // Check if after charging to windowMax, we can reach destination
+            const milesToDestFromHere = tripDistance - position;
+            const socNeededToDestFromHere = this.milesToSoc(milesToDestFromHere + endRange, this.vehicleRange);
+            
+            let targetSoc;
+            if (windowMax >= socNeededToDestFromHere) {
+                // Can reach destination after charging to windowMax
+                // Only charge as much as needed to reach destination + end-of-trip minimum
+                targetSoc = Math.max(socNeededToDestFromHere, windowMin); // Don't go below windowMin
+            } else {
+                // Even windowMax won't get us to destination, charge to windowMax
+                targetSoc = windowMax;
+            }
+            
+            log.push({
+                action: 'charge',
+                at: position,
+                socStart: soc,
+                socEnd: targetSoc,
+                note: `Charge to ${targetSoc}% (window max)`
+            });
+            
+            soc = targetSoc;
+        }
+        
+        // Calculate total time for the trip (matching the bar chart calculation method)
+        let totalTime = 0;
+        let detourCount = 0;
+        
+        for (const step of log) {
+            if (step.action === 'drive') {
+                // Calculate highway driving time (direct distance only)
+                const directDistance = step.to - step.from;
+                const highwayTime = directDistance / params.highwaySpeed;
+                totalTime += highwayTime;
+                
+                // If this drive includes detour (going to a charger), count it
+                if (step.actualDistance && step.actualDistance > directDistance) {
+                    detourCount++;
+                }
+            } else if (step.action === 'charge') {
+                const chargeTime = this.calculateChargingTime(step.socStart, step.socEnd);
+                totalTime += chargeTime;
+            }
+        }
+        
+        // Add detour time (calculated at city speed, like the bar chart)
+        const detourTime = detourCount * params.chargerDetourDistance / params.citySpeed;
+        totalTime += detourTime;
+        
+        return { path: log, strategyUsed: 'Conventional Charging', optimalTime: totalTime };
+    }
+
+    /**
+     * Convert conventional charging log to standard format expected by charts/tables
+     */
+    convertConventionalLogToStandardFormat(log) {
+        const standardPath = [];
+        let i = 0;
+        
+        while (i < log.length) {
+            const currentStep = log[i];
+            
+            if (currentStep.action === 'drive') {
+                // Check if this is followed by a charge step
+                const nextStep = log[i + 1];
+                if (nextStep && nextStep.action === 'charge') {
+                    // This is drive-to-charger followed by charge
+                    const chargingTime = this.calculateChargingTime(nextStep.socStart, nextStep.socEnd);
+                    
+                    standardPath.push({
+                        action: 'driveAndCharge',
+                        fromPosition: currentStep.from,
+                        toPosition: currentStep.to,
+                        socStart: currentStep.socStart, // SoC at start of drive
+                        socAtCharger: currentStep.socEnd, // SoC when arriving at charger
+                        socAfterCharge: nextStep.socEnd, // SoC after charging
+                        chargeTimeHours: chargingTime
+                    });
+                    i += 2; // Skip both drive and charge steps
+                } else {
+                    // This is drive-only (probably to destination)
+                    standardPath.push({
+                        action: 'driveToEnd',
+                        fromPosition: currentStep.from,
+                        toPosition: currentStep.to,
+                        socStart: currentStep.socStart,
+                        socEnd: currentStep.socEnd
+                    });
+                    i++;
+                }
+            } else {
+                // Unexpected step type, skip it
+                i++;
+            }
+        }
+        
+        return standardPath;
     }
 
     /**
@@ -1471,7 +1720,13 @@ class EvChargingOptimizer {
     optimizeWithStrategy(params) {
         let result;
         
-        if (params.optimizationStrategy === 'stops') {
+        if (params.optimizationStrategy === 'conventional') {
+            result = this.optimizeConventionalCharging(params);
+            if (result && result.path) {
+                const convertedPath = this.convertConventionalLogToStandardFormat(result.path);
+                result.path = convertedPath;
+            }
+        } else if (params.optimizationStrategy === 'stops') {
             result = this.optimizeMinimumStops(params);
         } else {
             result = this.optimizeChargingStrategy(params);
@@ -1479,7 +1734,11 @@ class EvChargingOptimizer {
 
         // Add strategy metadata to results
         if (result && !result.error && !result.path || (result.path && result.path.length > 0)) {
-            result.strategyUsed = params.optimizationStrategy === 'stops' ? 'Minimize Charging Stops' : 'Minimize Total Travel Time';
+            if (params.optimizationStrategy === 'conventional') {
+                result.strategyUsed = 'Conventional Charging';
+            } else {
+                result.strategyUsed = params.optimizationStrategy === 'stops' ? 'Minimize Charging Stops' : 'Minimize Total Travel Time';
+            }
         }
 
         return result;
@@ -1787,6 +2046,7 @@ class EvChargingOptimizer {
     }
 
     optimizeTrip() {
+        console.log('DEBUG: optimizeTrip() called');
         if (!this.chargingCurve1) {
             this.showError('Please upload at least one XML file.');
             return;
@@ -1794,11 +2054,15 @@ class EvChargingOptimizer {
         setTimeout(() => {
             try {
                 const params = this.getParameters();
+                console.log('DEBUG: Retrieved parameters:', params);
+                console.log('DEBUG: Optimization strategy:', params.optimizationStrategy);
                 
                 // Vehicle 1 - Use strategy-aware optimization
                 this.vehicleRange = this.vehicleRange1;
                 this.chargingCurve = this.chargingCurve1;
+                console.log('DEBUG: About to call optimizeWithStrategy for vehicle 1');
                 const result1 = this.optimizeWithStrategy(params);
+                console.log('DEBUG: Vehicle 1 optimization completed, result:', result1);
                 
                 let result2 = null;
                 if (
@@ -1807,13 +2071,18 @@ class EvChargingOptimizer {
                     this.vehicleName2 &&
                     this.vehicleRange2
                 ) {
+                    console.log('DEBUG: About to call optimizeWithStrategy for vehicle 2');
                     // Vehicle 2 - Use strategy-aware optimization
                     this.vehicleRange = this.vehicleRange2;
                     this.chargingCurve = this.chargingCurve2;
                     result2 = this.optimizeWithStrategy(params);
+                    console.log('DEBUG: Vehicle 2 optimization completed, result:', result2);
                 }
+                console.log('DEBUG: About to call displayComparisonResults');
                 this.displayComparisonResults(result1, result2, params);
             } catch (error) {
+                console.error('DEBUG: Error in optimizeTrip:', error);
+                console.error('DEBUG: Error stack:', error.stack);
                 this.showError('Optimization error: ' + error.message);
             }
         }, 100);
