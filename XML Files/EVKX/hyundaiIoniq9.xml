@@ -1,0 +1,111 @@
+<?xml version="1.0" ?>
+<vehicle>
+  <metadata>
+    <name>Hyundai Ioniq 9</name>
+    <range_miles>289</range_miles>
+    <range_speed_mph>70</range_speed_mph>
+  </metadata>
+  <charging_curve unit_time="minutes" unit_power="kW" unit_energy="kWh">
+    <point soc="0" power="50" time="0.00" energy="0.0"/>
+    <point soc="1" power="78" time="1.07" energy="1.1"/>
+    <point soc="2" power="181" time="1.60" energy="2.1"/>
+    <point soc="3" power="190" time="1.98" energy="3.2"/>
+    <point soc="4" power="192" time="2.33" energy="4.3"/>
+    <point soc="5" power="192" time="2.70" energy="5.4"/>
+    <point soc="6" power="193" time="3.05" energy="6.4"/>
+    <point soc="7" power="193" time="3.42" energy="7.5"/>
+    <point soc="8" power="194" time="3.77" energy="8.6"/>
+    <point soc="9" power="195" time="4.12" energy="9.6"/>
+    <point soc="10" power="196" time="4.48" energy="10.7"/>
+    <point soc="11" power="196" time="4.83" energy="11.8"/>
+    <point soc="12" power="196" time="5.18" energy="12.8"/>
+    <point soc="13" power="197" time="5.53" energy="13.9"/>
+    <point soc="14" power="197" time="5.88" energy="15.0"/>
+    <point soc="15" power="197" time="6.23" energy="16.0"/>
+    <point soc="16" power="197" time="6.58" energy="17.1"/>
+    <point soc="17" power="198" time="6.93" energy="18.2"/>
+    <point soc="18" power="198" time="7.28" energy="19.3"/>
+    <point soc="19" power="199" time="7.63" energy="20.3"/>
+    <point soc="20" power="200" time="7.98" energy="21.4"/>
+    <point soc="21" power="201" time="8.32" energy="22.5"/>
+    <point soc="22" power="201" time="8.67" energy="23.5"/>
+    <point soc="23" power="203" time="9.00" energy="24.6"/>
+    <point soc="24" power="203" time="9.35" energy="25.7"/>
+    <point soc="25" power="203" time="9.68" energy="26.8"/>
+    <point soc="26" power="204" time="10.03" energy="27.8"/>
+    <point soc="27" power="204" time="10.37" energy="28.9"/>
+    <point soc="28" power="204" time="10.70" energy="30.0"/>
+    <point soc="29" power="204" time="11.03" energy="31.0"/>
+    <point soc="30" power="204" time="11.38" energy="32.1"/>
+    <point soc="31" power="204" time="11.72" energy="33.2"/>
+    <point soc="32" power="205" time="12.05" energy="34.2"/>
+    <point soc="33" power="205" time="12.38" energy="35.3"/>
+    <point soc="34" power="205" time="12.73" energy="36.4"/>
+    <point soc="35" power="205" time="13.07" energy="37.4"/>
+    <point soc="36" power="206" time="13.40" energy="38.5"/>
+    <point soc="37" power="206" time="13.73" energy="39.6"/>
+    <point soc="38" power="206" time="14.07" energy="40.7"/>
+    <point soc="39" power="207" time="14.40" energy="41.7"/>
+    <point soc="40" power="208" time="14.73" energy="42.8"/>
+    <point soc="41" power="208" time="15.07" energy="43.9"/>
+    <point soc="42" power="208" time="15.40" energy="44.9"/>
+    <point soc="43" power="208" time="15.73" energy="46.0"/>
+    <point soc="44" power="209" time="16.07" energy="47.1"/>
+    <point soc="45" power="210" time="16.40" energy="48.2"/>
+    <point soc="46" power="210" time="16.72" energy="49.2"/>
+    <point soc="47" power="210" time="17.05" energy="50.3"/>
+    <point soc="48" power="210" time="17.38" energy="51.4"/>
+    <point soc="49" power="211" time="17.72" energy="52.4"/>
+    <point soc="50" power="211" time="18.03" energy="53.5"/>
+    <point soc="51" power="212" time="18.37" energy="54.6"/>
+    <point soc="52" power="213" time="18.68" energy="55.6"/>
+    <point soc="53" power="213" time="19.02" energy="56.7"/>
+    <point soc="54" power="201" time="19.35" energy="57.8"/>
+    <point soc="55" power="198" time="19.68" energy="58.8"/>
+    <point soc="56" power="199" time="20.03" energy="59.9"/>
+    <point soc="57" power="200" time="20.38" energy="61.0"/>
+    <point soc="58" power="200" time="20.73" energy="62.1"/>
+    <point soc="59" power="200" time="21.07" energy="63.1"/>
+    <point soc="60" power="200" time="21.42" energy="64.2"/>
+    <point soc="61" power="189" time="21.77" energy="65.3"/>
+    <point soc="62" power="189" time="22.13" energy="66.3"/>
+    <point soc="63" power="189" time="22.50" energy="67.4"/>
+    <point soc="64" power="190" time="22.87" energy="68.5"/>
+    <point soc="65" power="179" time="23.25" energy="69.6"/>
+    <point soc="66" power="179" time="23.63" energy="70.6"/>
+    <point soc="67" power="179" time="24.02" energy="71.7"/>
+    <point soc="68" power="179" time="24.40" energy="72.8"/>
+    <point soc="69" power="180" time="24.78" energy="73.8"/>
+    <point soc="70" power="171" time="25.18" energy="74.9"/>
+    <point soc="71" power="172" time="25.58" energy="76.0"/>
+    <point soc="72" power="134" time="26.03" energy="77.0"/>
+    <point soc="73" power="134" time="26.55" energy="78.1"/>
+    <point soc="74" power="134" time="27.07" energy="79.2"/>
+    <point soc="75" power="134" time="27.58" energy="80.2"/>
+    <point soc="76" power="119" time="28.12" energy="81.3"/>
+    <point soc="77" power="105" time="28.73" energy="82.4"/>
+    <point soc="78" power="93" time="29.43" energy="83.5"/>
+    <point soc="79" power="84" time="30.22" energy="84.5"/>
+    <point soc="80" power="75" time="31.08" energy="85.6"/>
+    <point soc="81" power="65" time="32.07" energy="86.7"/>
+    <point soc="82" power="65" time="33.13" energy="87.7"/>
+    <point soc="83" power="59" time="34.25" energy="88.8"/>
+    <point soc="84" power="48" time="35.53" energy="89.9"/>
+    <point soc="85" power="43" time="37.05" energy="91.0"/>
+    <point soc="86" power="41" time="38.70" energy="92.0"/>
+    <point soc="87" power="41" time="40.38" energy="93.1"/>
+    <point soc="88" power="41" time="42.07" energy="94.2"/>
+    <point soc="89" power="40" time="43.77" energy="95.2"/>
+    <point soc="90" power="40" time="45.50" energy="96.3"/>
+    <point soc="91" power="40" time="47.22" energy="97.4"/>
+    <point soc="92" power="40" time="48.95" energy="98.4"/>
+    <point soc="93" power="37" time="50.73" energy="99.5"/>
+    <point soc="94" power="32" time="52.75" energy="100.6"/>
+    <point soc="95" power="30" time="54.97" energy="101.6"/>
+    <point soc="96" power="29" time="57.32" energy="102.7"/>
+    <point soc="97" power="21" time="60.07" energy="103.8"/>
+    <point soc="98" power="14" time="64.02" energy="104.9"/>
+    <point soc="99" power="14" time="68.95" energy="105.9"/>
+    <point soc="100" power="14" time="73.88" energy="107.0"/>
+  </charging_curve>
+</vehicle>

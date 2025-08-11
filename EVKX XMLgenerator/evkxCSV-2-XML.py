@@ -333,7 +333,7 @@ def convert_files(csv_files, selected_indices):
 
 def main():
     """Main function."""
-    print("CSV to XML Charging Curve Converter")
+    print("Aaron's Handy CSV to XML Charging Curve Converter")
     print("=" * 40)
     
     try:

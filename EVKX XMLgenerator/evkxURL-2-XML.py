@@ -576,7 +576,7 @@ def convert_csv_files(csv_files, selected_indices):
 
 def main():
     """Main function."""
-    print("URL/CSV to XML Charging Curve Converter")
+    print("Aaron's Handy URL/CSV to XML Charging Curve Converter")
     print("=" * 45)
     
     try:

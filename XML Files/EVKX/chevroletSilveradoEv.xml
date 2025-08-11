@@ -1,12 +1,12 @@
 <?xml version="1.0" ?>
 <vehicle>
   <metadata>
-    <name>Chevy Silverado EV</name>
+    <name>Chevrolet Silverado EV</name>
     <range_miles>435</range_miles>
     <range_speed_mph>70</range_speed_mph>
   </metadata>
   <charging_curve unit_time="minutes" unit_power="kW" unit_energy="kWh">
-    <point soc="0" power="150" time="0.00" energy="0"/>
+    <point soc="0" power="150" time="0.00" energy="0.0"/>
     <point soc="1" power="340" time="0.55" energy="2.2"/>
     <point soc="2" power="355" time="0.95" energy="4.3"/>
     <point soc="3" power="358" time="1.35" energy="6.4"/>
