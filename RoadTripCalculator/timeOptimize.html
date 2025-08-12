@@ -383,7 +383,7 @@
                     <label>Optimization Strategy</label>
                     <div style="margin-top: 8px;">
                         <div style="margin-bottom: 8px;">
-                            <input type="radio" id="strategyTime" name="optimizationStrategy" value="time" checked>
+                            <input type="radio" id="strategyTime" name="optimizationStrategy" value="time">
                             <label for="strategyTime" style="display: inline; margin-left: 6px; margin-bottom: 0; font-weight: normal;">Minimize Total Travel Time</label>
                         </div>
                         <div>
@@ -400,36 +400,36 @@
                 <div class="control-group">
                     <label for="drivingDistance" title="How far should the vehicle(s) drive?">Trip Distance (miles)</label>
                     <div class="input-container">
-                        <input type="range" id="drivingDistanceSlider" class="slider" min="100" max="3000" value="1000" step="50">
-                        <input type="number" id="drivingDistance" class="number-input" value="1000" min="100" max="3000" step="50">
+                        <input type="range" id="drivingDistanceSlider" class="slider" min="100" max="3000" step="50">
+                        <input type="number" id="drivingDistance" class="number-input" min="100" max="3000" step="50">
                     </div>
                 </div>
                 <div class="control-group">
                     <label for="chargerSpacing" title="How far apart should the charging stations be?">Distance Between Chargers (miles)</label>
                     <div class="input-container">
-                        <input type="range" id="chargerSpacingSlider" class="slider" min="25" max="150" value="50" step="25">
-                        <input type="number" id="chargerSpacing" class="number-input" value="50" min="25" max="150" step="25">
+                        <input type="range" id="chargerSpacingSlider" class="slider" min="25" max="150" step="25">
+                        <input type="number" id="chargerSpacing" class="number-input" min="25" max="150" step="25">
                     </div>
                 </div>
                 <div class="control-group">
                     <label for="chargerDetourDistance" title="How many miles does the vehicle need to drive off the main route to get to a charger (round-trip)?">Charger Detour Distance (miles)</label>
                     <div class="input-container">
-                        <input type="range" id="chargerDetourDistanceSlider" class="slider" min="1" max="10" value="2.5" step="0.5">
-                        <input type="number" id="chargerDetourDistance" class="number-input" value="2.5" min="1" max="10" step="0.5">
+                        <input type="range" id="chargerDetourDistanceSlider" class="slider" min="1" max="10" step="0.5">
+                        <input type="number" id="chargerDetourDistance" class="number-input" min="1" max="10" step="0.5">
                     </div>
                 </div>
                 <div class="control-group">
                     <label for="startSoc" title="What is the charge level of the vehicle when it first departs (%)?">Starting Charge Level (%)</label>
                     <div class="input-container">
-                        <input type="range" id="startSocSlider" class="slider" min="50" max="100" value="100" step="5">
-                        <input type="number" id="startSoc" class="number-input" value="100" min="50" max="100" step="5">
+                        <input type="range" id="startSocSlider" class="slider" min="50" max="100" step="5">
+                        <input type="number" id="startSoc" class="number-input" min="50" max="100" step="5">
                     </div>
                 </div>
                 <div class="control-group" id="minSocGroup">
                     <label for="minSoc" title="What is the lowest charge level for vehicle during the trip (%)?">Minimum Charge Level (%)</label>
                     <div class="input-container">
-                        <input type="range" id="minSocSlider" class="slider" min="5" max="30" value="10" step="1">
-                        <input type="number" id="minSoc" class="number-input" value="10" min="5" max="30" step="1">
+                        <input type="range" id="minSocSlider" class="slider" min="5" max="30" step="1">
+                        <input type="number" id="minSoc" class="number-input" min="5" max="30" step="1">
                     </div>
                 </div>
                 <div class="control-group" id="chargingWindowGroup" style="display:none;">
@@ -445,8 +445,8 @@
                 <div class="control-group">
                     <label for="endRangeRequirement" title="What is the minimum range required at the end of the trip (miles)?">End of Trip Range Minimum (miles)</label>
                     <div class="input-container">
-                        <input type="range" id="endRangeRequirementSlider" class="slider" min="0" max="100" value="25" step="5">
-                        <input type="number" id="endRangeRequirement" class="number-input" value="25" min="0" max="100" step="5">
+                        <input type="range" id="endRangeRequirementSlider" class="slider" min="0" max="100" step="5">
+                        <input type="number" id="endRangeRequirement" class="number-input" min="0" max="100" step="5">
                     </div>
                 </div>
                 <button id="optimizeBtn" class="btn" disabled>Upload Vehicle XML File Above</button>
@@ -2693,8 +2693,70 @@ class EvChargingOptimizer {
  * This section runs when the webpage loads and sets up the application
  */
 
+// Centralized form defaults configuration
+const FORM_DEFAULTS = {
+    // Optimization strategy
+    optimizationStrategy: 'time', // 'time', 'stops', or 'conventional'
+    
+    // Trip parameters
+    drivingDistance: 1000,
+    chargerSpacing: 50,
+    chargerDetourDistance: 2.5,
+    startSoc: 100,
+    minSoc: 10,
+    endRangeRequirement: 25,
+    
+    // Charging window
+    chargingWindowMin: 10,
+    chargingWindowMax: 80,
+    
+    // Vehicle selections
+    vehicle1Index: 0,
+    vehicle2Index: 0
+};
+
+// Function to dynamically set HTML default values from centralized config
+function setHtmlDefaults() {
+    // Set input default values
+    const inputMappings = {
+        'drivingDistanceSlider': FORM_DEFAULTS.drivingDistance,
+        'drivingDistance': FORM_DEFAULTS.drivingDistance,
+        'chargerSpacingSlider': FORM_DEFAULTS.chargerSpacing,
+        'chargerSpacing': FORM_DEFAULTS.chargerSpacing,
+        'chargerDetourDistanceSlider': FORM_DEFAULTS.chargerDetourDistance,
+        'chargerDetourDistance': FORM_DEFAULTS.chargerDetourDistance,
+        'startSocSlider': FORM_DEFAULTS.startSoc,
+        'startSoc': FORM_DEFAULTS.startSoc,
+        'minSocSlider': FORM_DEFAULTS.minSoc,
+        'minSoc': FORM_DEFAULTS.minSoc,
+        'endRangeRequirementSlider': FORM_DEFAULTS.endRangeRequirement,
+        'endRangeRequirement': FORM_DEFAULTS.endRangeRequirement
+    };
+    
+    // Apply default values to HTML elements
+    Object.entries(inputMappings).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.setAttribute('value', value);
+            element.value = value; // Also set current value
+        }
+    });
+    
+    // Set default optimization strategy
+    const strategyRadios = document.querySelectorAll('input[name="optimizationStrategy"]');
+    strategyRadios.forEach(radio => {
+        radio.checked = (radio.value === FORM_DEFAULTS.optimizationStrategy);
+    });
+}
+
 // Initialize the app and DP explorer controls when the page loads
 document.addEventListener('DOMContentLoaded', () => {
+    // Set HTML default values from centralized configuration
+    setHtmlDefaults();
+    
+    // Reset all form values to defaults to prevent browser persistence
+    resetFormToDefaults();
+    
     // Create a new instance of the EV charging optimizer
     const optimizer = new EvChargingOptimizer();
     
@@ -2707,6 +2769,81 @@ document.addEventListener('DOMContentLoaded', () => {
     // Note: All calculation logic is triggered by user interaction through the UI
     // The main "Calculate" button calls optimizer.calculateAndDisplayResults()
 });
+
+// Function to reset all form values to their defaults using centralized config
+function resetFormToDefaults() {
+    // Reset vehicle dropdowns
+    const vehicle1Select = document.getElementById('vehicle1');
+    const vehicle2Select = document.getElementById('vehicle2');
+    if (vehicle1Select) vehicle1Select.selectedIndex = FORM_DEFAULTS.vehicle1Index;
+    if (vehicle2Select) vehicle2Select.selectedIndex = FORM_DEFAULTS.vehicle2Index;
+    
+    // Reset optimization strategy based on centralized default
+    const strategyRadios = {
+        'time': document.getElementById('strategyTime'),
+        'stops': document.getElementById('strategyStops'),
+        'conventional': document.getElementById('strategyConventional')
+    };
+    
+    // Uncheck all strategy radios first
+    Object.values(strategyRadios).forEach(radio => {
+        if (radio) radio.checked = false;
+    });
+    
+    // Check the default strategy
+    const defaultStrategyRadio = strategyRadios[FORM_DEFAULTS.optimizationStrategy];
+    if (defaultStrategyRadio) defaultStrategyRadio.checked = true;
+    
+    // Reset all sliders and number inputs using centralized defaults
+    const formElements = {
+        'drivingDistance': FORM_DEFAULTS.drivingDistance,
+        'drivingDistanceSlider': FORM_DEFAULTS.drivingDistance,
+        'chargerSpacing': FORM_DEFAULTS.chargerSpacing,
+        'chargerSpacingSlider': FORM_DEFAULTS.chargerSpacing,
+        'chargerDetourDistance': FORM_DEFAULTS.chargerDetourDistance,
+        'chargerDetourDistanceSlider': FORM_DEFAULTS.chargerDetourDistance,
+        'startSoc': FORM_DEFAULTS.startSoc,
+        'startSocSlider': FORM_DEFAULTS.startSoc,
+        'minSoc': FORM_DEFAULTS.minSoc,
+        'minSocSlider': FORM_DEFAULTS.minSoc,
+        'endRangeRequirement': FORM_DEFAULTS.endRangeRequirement,
+        'endRangeRequirementSlider': FORM_DEFAULTS.endRangeRequirement
+    };
+    
+    // Apply default values
+    Object.entries(formElements).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.value = value;
+        }
+    });
+    
+    // Reset charging window slider using centralized defaults
+    const chargingWindowElement = document.getElementById('chargingWindow');
+    if (chargingWindowElement && window.$ && window.$.fn.slider) {
+        // Wait for jQuery UI to be available
+        setTimeout(() => {
+            try {
+                $(chargingWindowElement).slider('values', [FORM_DEFAULTS.chargingWindowMin, FORM_DEFAULTS.chargingWindowMax]);
+            } catch (e) {
+                // Fallback if slider not initialized yet
+                console.log('Charging window slider not ready yet');
+            }
+        }, 100);
+    }
+    
+    // Clear file inputs
+    const xmlFile1 = document.getElementById('xmlFile1');
+    const xmlFile2 = document.getElementById('xmlFile2');
+    if (xmlFile1) xmlFile1.value = '';
+    if (xmlFile2) xmlFile2.value = '';
+    
+    // Clear any results panels
+    const resultsPanel = document.querySelector('.results-panel .results-content');
+    if (resultsPanel) {
+        resultsPanel.innerHTML = '<p>Configure your trip parameters and click "Calculate" to see results.</p>';
+    }
+}
 </script>
 </body>
 </html>
