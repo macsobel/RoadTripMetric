@@ -609,7 +609,6 @@ class EvChargingOptimizer {
     setupEventListeners() {
         // jQuery UI dual-thumb slider for Conventional Charging Window
         $(function() {
-            console.log('DEBUG: Initializing jQuery UI slider');
             $("#chargingWindowSlider").slider({
                 range: true,
                 min: 5,
@@ -617,7 +616,6 @@ class EvChargingOptimizer {
                 step: 5,
                 values: [10, 80],
                 slide: function(event, ui) {
-                    console.log('DEBUG: Slider values changed to:', ui.values);
                     $("#chargingWindowMinLabel").text(ui.values[0]);
                     $("#chargingWindowMaxLabel").text(ui.values[1]);
                 }
@@ -625,7 +623,6 @@ class EvChargingOptimizer {
             // Set initial label values
             $("#chargingWindowMinLabel").text(10);
             $("#chargingWindowMaxLabel").text(80);
-            console.log('DEBUG: Slider initialized with values:', $("#chargingWindowSlider").slider("values"));
         });
         // List of controls that have both sliders and number inputs
         const controls = [
@@ -672,12 +669,9 @@ class EvChargingOptimizer {
 
         // Show/hide minSoc and charging window controls based on strategy
         const strategyRadios = document.querySelectorAll('input[name="optimizationStrategy"]');
-        console.log('DEBUG: Found strategy radios:', strategyRadios.length);
         strategyRadios.forEach(radio => {
-            console.log('DEBUG: Radio button:', radio.id, 'value:', radio.value);
             radio.addEventListener('change', () => {
                 const isConventional = document.getElementById('strategyConventional').checked;
-                console.log('DEBUG: Strategy changed, isConventional:', isConventional);
                 document.getElementById('chargingWindowGroup').style.display = isConventional ? '' : 'none';
                 document.getElementById('minSocGroup').style.display = isConventional ? 'none' : '';
             });
@@ -994,9 +988,7 @@ class EvChargingOptimizer {
      * @returns {Object} Parameters object with all trip settings
      */
     getParameters() {
-        const strategyRadio = document.querySelector('input[name="optimizationStrategy"]:checked');
-        console.log('DEBUG: Strategy radio found:', strategyRadio);
-        console.log('DEBUG: Strategy value:', strategyRadio ? strategyRadio.value : 'none');
+    const strategyRadio = document.querySelector('input[name="optimizationStrategy"]:checked');
         
         const params = {
             drivingDistance: parseFloat(document.getElementById('drivingDistance').value),
@@ -1010,12 +1002,9 @@ class EvChargingOptimizer {
         };
         if (params.optimizationStrategy === 'conventional') {
             const sliderVals = $("#chargingWindowSlider").slider("values");
-            console.log('DEBUG: Slider values:', sliderVals);
             params.chargingWindowMin = sliderVals[0];
             params.chargingWindowMax = sliderVals[1];
             params.minSoc = sliderVals[0]; // Use min from window for formulas
-            console.log('DEBUG: Set chargingWindowMin:', params.chargingWindowMin);
-            console.log('DEBUG: Set chargingWindowMax:', params.chargingWindowMax);
         } else {
             params.minSoc = parseFloat(document.getElementById('minSoc').value);
         }
@@ -2046,7 +2035,6 @@ class EvChargingOptimizer {
     }
 
     optimizeTrip() {
-        console.log('DEBUG: optimizeTrip() called');
         if (!this.chargingCurve1) {
             this.showError('Please upload at least one XML file.');
             return;
@@ -2054,15 +2042,11 @@ class EvChargingOptimizer {
         setTimeout(() => {
             try {
                 const params = this.getParameters();
-                console.log('DEBUG: Retrieved parameters:', params);
-                console.log('DEBUG: Optimization strategy:', params.optimizationStrategy);
                 
                 // Vehicle 1 - Use strategy-aware optimization
                 this.vehicleRange = this.vehicleRange1;
                 this.chargingCurve = this.chargingCurve1;
-                console.log('DEBUG: About to call optimizeWithStrategy for vehicle 1');
                 const result1 = this.optimizeWithStrategy(params);
-                console.log('DEBUG: Vehicle 1 optimization completed, result:', result1);
                 
                 let result2 = null;
                 if (
@@ -2071,18 +2055,13 @@ class EvChargingOptimizer {
                     this.vehicleName2 &&
                     this.vehicleRange2
                 ) {
-                    console.log('DEBUG: About to call optimizeWithStrategy for vehicle 2');
                     // Vehicle 2 - Use strategy-aware optimization
                     this.vehicleRange = this.vehicleRange2;
                     this.chargingCurve = this.chargingCurve2;
                     result2 = this.optimizeWithStrategy(params);
-                    console.log('DEBUG: Vehicle 2 optimization completed, result:', result2);
                 }
-                console.log('DEBUG: About to call displayComparisonResults');
                 this.displayComparisonResults(result1, result2, params);
             } catch (error) {
-                console.error('DEBUG: Error in optimizeTrip:', error);
-                console.error('DEBUG: Error stack:', error.stack);
                 this.showError('Optimization error: ' + error.message);
             }
         }, 100);
@@ -2773,8 +2752,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // Function to reset all form values to their defaults using centralized config
 function resetFormToDefaults() {
     // Reset vehicle dropdowns
-    const vehicle1Select = document.getElementById('vehicle1');
-    const vehicle2Select = document.getElementById('vehicle2');
+    const vehicle1Select = document.getElementById('vehicleSelect1');
+    const vehicle2Select = document.getElementById('vehicleSelect2');
     if (vehicle1Select) vehicle1Select.selectedIndex = FORM_DEFAULTS.vehicle1Index;
     if (vehicle2Select) vehicle2Select.selectedIndex = FORM_DEFAULTS.vehicle2Index;
     
@@ -2819,7 +2798,7 @@ function resetFormToDefaults() {
     });
     
     // Reset charging window slider using centralized defaults
-    const chargingWindowElement = document.getElementById('chargingWindow');
+    const chargingWindowElement = document.getElementById('chargingWindowSlider');
     if (chargingWindowElement && window.$ && window.$.fn.slider) {
         // Wait for jQuery UI to be available
         setTimeout(() => {
@@ -2827,7 +2806,6 @@ function resetFormToDefaults() {
                 $(chargingWindowElement).slider('values', [FORM_DEFAULTS.chargingWindowMin, FORM_DEFAULTS.chargingWindowMax]);
             } catch (e) {
                 // Fallback if slider not initialized yet
-                console.log('Charging window slider not ready yet');
             }
         }, 100);
     }
