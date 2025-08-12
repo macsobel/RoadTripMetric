@@ -460,6 +460,28 @@
                         Select at least one vehicle and click "Show Results" to see results.
                     </p>
                 </div>
+                <!-- Loading indicator -->
+                <div id="loadingMessage" class="hidden">
+                    <div style="display: flex; flex-direction: column; align-items: center; margin-top: 50px;">
+                        <div class="spinner" style="margin-bottom: 16px;"></div>
+                        <span style="color: #667eea; font-size: 1.1em;">Calculating results...</span>
+                    </div>
+                </div>
+    <style>
+        /* ...existing code... */
+        .spinner {
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
                 <!-- Error message -->
                 <div id="errorMessage" class="error hidden"></div>
                 <!-- Results content -->
@@ -2073,15 +2095,18 @@ class EvChargingOptimizer {
             this.showError('Please upload at least one XML file.');
             return;
         }
+        // Show loading spinner and hide results/default/error
+        document.getElementById('defaultMessage').classList.add('hidden');
+        document.getElementById('resultsContent').classList.add('hidden');
+        document.getElementById('errorMessage').classList.add('hidden');
+        document.getElementById('loadingMessage').classList.remove('hidden');
         setTimeout(() => {
             try {
                 const params = this.getParameters();
-                
                 // Vehicle 1 - Use strategy-aware optimization
                 this.vehicleRange = this.vehicleRange1;
                 this.chargingCurve = this.chargingCurve1;
                 const result1 = this.optimizeWithStrategy(params);
-                
                 let result2 = null;
                 if (
                     this.chargingCurve2 &&
@@ -2097,6 +2122,9 @@ class EvChargingOptimizer {
                 this.displayComparisonResults(result1, result2, params);
             } catch (error) {
                 this.showError('Optimization error: ' + error.message);
+            } finally {
+                // Hide loading spinner after calculation
+                document.getElementById('loadingMessage').classList.add('hidden');
             }
         }, 100);
     }
@@ -2107,15 +2135,18 @@ class EvChargingOptimizer {
      */
     displayComparisonResults(result1, result2, params) {
         this.hideError();
+        document.getElementById('loadingMessage').classList.add('hidden');
         document.getElementById('defaultMessage').classList.add('hidden');
         document.getElementById('resultsContent').classList.remove('hidden');
 
         if (!result1.path.length) {
             this.showError('No valid trip found for the uploaded vehicle with the current parameters.');
+            document.getElementById('loadingMessage').classList.add('hidden');
             return;
         }
         if (result2 && !result2.path.length) {
             this.showError('No valid trip found for the second vehicle with the current parameters.');
+            document.getElementById('loadingMessage').classList.add('hidden');
             return;
         }
 
