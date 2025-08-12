@@ -198,6 +198,12 @@
             font-weight: 600;
             color: #047857;
         }
+        .total-travel-time {
+            font-weight: bold;
+            color: #1db954; /* bright green */
+            background: #eaffea;
+            font-size: 1.08em;
+        }
         .chart-container {
             background: #f8fafc;
             border-radius: 8px;
@@ -567,6 +573,22 @@
         </div>
     </div>
     <script>
+    // Utility to bold and green the Total Travel Time row in the results table
+    function highlightTotalTravelTime() {
+        const resultsTable = document.getElementById('resultsTable');
+        if (!resultsTable) return;
+        for (let row of resultsTable.rows) {
+            if (row.cells.length > 0 && row.cells[0].textContent.replace(/\s+/g, '').toLowerCase() === 'totaltraveltime') {
+                for (let i = 1; i < row.cells.length; i++) {
+                    row.cells[i].classList.add('total-travel-time');
+                    row.cells[i].style.fontWeight = 'bold';
+                    row.cells[i].style.color = '#1db954';
+                    row.cells[i].style.background = '#eaffea';
+                    row.cells[i].style.fontSize = '1.08em';
+                }
+            }
+        }
+    }
 /**
  * EV Road Trip Metric Calculator
  * Author: Aaron Sobel
@@ -577,7 +599,7 @@
  *
  */
 
-class EvChargingOptimizer {
+    class EvChargingOptimizer {
     constructor() {
         // Vehicle 1 data
         this.vehicleName1 = null;
@@ -616,6 +638,12 @@ class EvChargingOptimizer {
         // Initialize the application
         this.setupEventListeners();
         this.loadGitHubVehicles();
+        // Patch: highlight total travel time after results are rendered
+        const origShowResults = this.showResults;
+        this.showResults = (...args) => {
+            origShowResults.apply(this, args);
+            setTimeout(highlightTotalTravelTime, 0);
+        };
     }
 
     /**
@@ -703,6 +731,17 @@ class EvChargingOptimizer {
         document.getElementById('resultsContent').classList.add('hidden');
         document.getElementById('errorMessage').textContent = message;
         document.getElementById('errorMessage').classList.remove('hidden');
+    }
+
+    /**
+     * Shows the results panel and highlights total travel time
+     * (This method is patched in the constructor to call highlightTotalTravelTime)
+     */
+    showResults() {
+        document.getElementById('resultsContent').classList.remove('hidden');
+        document.getElementById('defaultMessage').classList.add('hidden');
+        this.hideError();
+        setTimeout(highlightTotalTravelTime, 0);
     }
 
     /**
@@ -2186,7 +2225,8 @@ class EvChargingOptimizer {
         ].map(([label, v1, v2]) =>
             `<tr><th>${label}</th><td>${v1}</td>${result2 ? `<td>${v2}</td>` : ''}</tr>`
         ).join('');
-        document.getElementById('resultsTable').innerHTML = resultsHtml;
+    document.getElementById('resultsTable').innerHTML = resultsHtml;
+    setTimeout(highlightTotalTravelTime, 0);
 
         // Charts
         const times1 = this.getTimeBreakdown(result1, params);
