@@ -591,7 +591,8 @@
     }
 /**
  * EV Road Trip Metric Calculator
- * Author: Aaron Sobel
+ * Author: Aaron Sobel (Supported by GitHub Copilot)
+ * Concept: Aaron Sobel & Jarrod Brown
  *
  * This application determines EV charging strategies to compare relative travel efficiency.
  * It uses dynamic programming to find the optimal charging stops and times to minimize
@@ -653,20 +654,21 @@
     setupEventListeners() {
         // jQuery UI dual-thumb slider for Conventional Charging Window
         $(function() {
+            const sliderDefaults = formDefaults.chargingWindowSlider;
             $("#chargingWindowSlider").slider({
                 range: true,
-                min: 5,
-                max: 100,
-                step: 5,
-                values: [10, 80],
+                min: sliderDefaults.min,
+                max: sliderDefaults.max,
+                step: sliderDefaults.step,
+                values: sliderDefaults.values,
                 slide: function(event, ui) {
                     $("#chargingWindowMinLabel").text(ui.values[0]);
                     $("#chargingWindowMaxLabel").text(ui.values[1]);
                 }
             });
             // Set initial label values
-            $("#chargingWindowMinLabel").text(10);
-            $("#chargingWindowMaxLabel").text(80);
+            $("#chargingWindowMinLabel").text(sliderDefaults.values[0]);
+            $("#chargingWindowMaxLabel").text(sliderDefaults.values[1]);
         });
         // List of controls that have both sliders and number inputs
         const controls = [
@@ -2795,7 +2797,7 @@
 // Centralized form defaults configuration
 //
 // All default values for the form and UI are set here for easy maintenance.
-const FORM_DEFAULTS = {
+const formDefaults = {
     // Optimization strategy
     optimizationStrategy: 'time', // 'time', 'stops', or 'conventional'
     
@@ -2810,6 +2812,12 @@ const FORM_DEFAULTS = {
     // Charging window
     chargingWindowMin: 10,
     chargingWindowMax: 80,
+    chargingWindowSlider: {
+        min: 5,
+        max: 100,
+        step: 5,
+        values: [10, 80]
+    },
     
     // Vehicle selections
     vehicle1Index: 0,
@@ -2818,22 +2826,22 @@ const FORM_DEFAULTS = {
 
 // Function to dynamically set HTML default values from centralized config
 //
-// This ensures that all form controls are initialized consistently from FORM_DEFAULTS.
+// This ensures that all form controls are initialized consistently from formDefaults.
 function setHtmlDefaults() {
     // Set input default values
     const inputMappings = {
-        'drivingDistanceSlider': FORM_DEFAULTS.drivingDistance,
-        'drivingDistance': FORM_DEFAULTS.drivingDistance,
-        'chargerSpacingSlider': FORM_DEFAULTS.chargerSpacing,
-        'chargerSpacing': FORM_DEFAULTS.chargerSpacing,
-        'chargerDetourDistanceSlider': FORM_DEFAULTS.chargerDetourDistance,
-        'chargerDetourDistance': FORM_DEFAULTS.chargerDetourDistance,
-        'startSocSlider': FORM_DEFAULTS.startSoc,
-        'startSoc': FORM_DEFAULTS.startSoc,
-        'minSocSlider': FORM_DEFAULTS.minSoc,
-        'minSoc': FORM_DEFAULTS.minSoc,
-        'endRangeRequirementSlider': FORM_DEFAULTS.endRangeRequirement,
-        'endRangeRequirement': FORM_DEFAULTS.endRangeRequirement
+    'drivingDistanceSlider': formDefaults.drivingDistance,
+    'drivingDistance': formDefaults.drivingDistance,
+    'chargerSpacingSlider': formDefaults.chargerSpacing,
+    'chargerSpacing': formDefaults.chargerSpacing,
+    'chargerDetourDistanceSlider': formDefaults.chargerDetourDistance,
+    'chargerDetourDistance': formDefaults.chargerDetourDistance,
+    'startSocSlider': formDefaults.startSoc,
+    'startSoc': formDefaults.startSoc,
+    'minSocSlider': formDefaults.minSoc,
+    'minSoc': formDefaults.minSoc,
+    'endRangeRequirementSlider': formDefaults.endRangeRequirement,
+    'endRangeRequirement': formDefaults.endRangeRequirement
     };
     
     // Apply default values to HTML elements
@@ -2848,7 +2856,7 @@ function setHtmlDefaults() {
     // Set default optimization strategy
     const strategyRadios = document.querySelectorAll('input[name="optimizationStrategy"]');
     strategyRadios.forEach(radio => {
-        radio.checked = (radio.value === FORM_DEFAULTS.optimizationStrategy);
+    radio.checked = (radio.value === formDefaults.optimizationStrategy);
     });
 }
 
@@ -2882,8 +2890,8 @@ function resetFormToDefaults() {
     // Reset vehicle dropdowns
     const vehicle1Select = document.getElementById('vehicleSelect1');
     const vehicle2Select = document.getElementById('vehicleSelect2');
-    if (vehicle1Select) vehicle1Select.selectedIndex = FORM_DEFAULTS.vehicle1Index;
-    if (vehicle2Select) vehicle2Select.selectedIndex = FORM_DEFAULTS.vehicle2Index;
+    if (vehicle1Select) vehicle1Select.selectedIndex = formDefaults.vehicle1Index;
+    if (vehicle2Select) vehicle2Select.selectedIndex = formDefaults.vehicle2Index;
     
     // Reset optimization strategy based on centralized default
     const strategyRadios = {
@@ -2898,23 +2906,23 @@ function resetFormToDefaults() {
     });
     
     // Check the default strategy
-    const defaultStrategyRadio = strategyRadios[FORM_DEFAULTS.optimizationStrategy];
+    const defaultStrategyRadio = strategyRadios[formDefaults.optimizationStrategy];
     if (defaultStrategyRadio) defaultStrategyRadio.checked = true;
     
     // Reset all sliders and number inputs using centralized defaults
     const formElements = {
-        'drivingDistance': FORM_DEFAULTS.drivingDistance,
-        'drivingDistanceSlider': FORM_DEFAULTS.drivingDistance,
-        'chargerSpacing': FORM_DEFAULTS.chargerSpacing,
-        'chargerSpacingSlider': FORM_DEFAULTS.chargerSpacing,
-        'chargerDetourDistance': FORM_DEFAULTS.chargerDetourDistance,
-        'chargerDetourDistanceSlider': FORM_DEFAULTS.chargerDetourDistance,
-        'startSoc': FORM_DEFAULTS.startSoc,
-        'startSocSlider': FORM_DEFAULTS.startSoc,
-        'minSoc': FORM_DEFAULTS.minSoc,
-        'minSocSlider': FORM_DEFAULTS.minSoc,
-        'endRangeRequirement': FORM_DEFAULTS.endRangeRequirement,
-        'endRangeRequirementSlider': FORM_DEFAULTS.endRangeRequirement
+        'drivingDistance': formDefaults.drivingDistance,
+        'drivingDistanceSlider': formDefaults.drivingDistance,
+        'chargerSpacing': formDefaults.chargerSpacing,
+        'chargerSpacingSlider': formDefaults.chargerSpacing,
+        'chargerDetourDistance': formDefaults.chargerDetourDistance,
+        'chargerDetourDistanceSlider': formDefaults.chargerDetourDistance,
+        'startSoc': formDefaults.startSoc,
+        'startSocSlider': formDefaults.startSoc,
+        'minSoc': formDefaults.minSoc,
+        'minSocSlider': formDefaults.minSoc,
+        'endRangeRequirement': formDefaults.endRangeRequirement,
+        'endRangeRequirementSlider': formDefaults.endRangeRequirement
     };
     
     // Apply default values
@@ -2931,7 +2939,7 @@ function resetFormToDefaults() {
         // Wait for jQuery UI to be available
         setTimeout(() => {
             try {
-                $(chargingWindowElement).slider('values', [FORM_DEFAULTS.chargingWindowMin, FORM_DEFAULTS.chargingWindowMax]);
+                $(chargingWindowElement).slider('values', [formDefaults.chargingWindowMin, formDefaults.chargingWindowMax]);
             } catch (e) {
                 // Fallback if slider not initialized yet
             }
