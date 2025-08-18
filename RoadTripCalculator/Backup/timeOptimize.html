@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EV Road Trip Calculator</title>
+    <title>EV Road Trip Metric</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://www.epa.gov/sites/all/modules/contrib/jquery_update/replace/ui/ui/minified/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://www.epa.gov/sites/all/modules/contrib/jquery_update/replace/ui/themes/base/minified/jquery-ui.min.css" />
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://code.highcharts.com/highcharts-more.js"></script>
     <script src="https://code.highcharts.com/modules/annotations.js"></script>
@@ -14,7 +17,7 @@
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             min-height: 100vh;
             line-height: 1.6;
         }
@@ -86,7 +89,7 @@
             width: 20px;
             height: 20px;
             border-radius: 50%;
-            background: #667eea;
+            background: #3b82f6;
             cursor: pointer;
             box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
         }
@@ -102,13 +105,13 @@
         }
         .number-input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         .btn {
             width: 100%;
             padding: 14px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
             border: none;
             border-radius: 8px;
@@ -194,6 +197,12 @@
             background: #e6fffa;
             font-weight: 600;
             color: #047857;
+        }
+        .total-travel-time {
+            font-weight: bold;
+            color: #1db954; /* bright green */
+            background: #eaffea;
+            font-size: 1.08em;
         }
         .chart-container {
             background: #f8fafc;
@@ -292,6 +301,15 @@
                 font-size: 1.3rem;
                 margin-bottom: 18px;
             }
+            /* Mobile styling for intro text */
+            .container > div:nth-child(2) {
+                margin: 0 0 16px 0 !important;
+                gap: 8px !important;
+            }
+            .container > div:nth-child(2) p {
+                font-size: 0.9rem !important;
+                text-align: left !important;
+            }
         }
         .compare-charts {
             display: flex;
@@ -315,7 +333,7 @@
         }
         .vehicle-select:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         .vehicle-select:disabled {
@@ -324,18 +342,63 @@
             cursor: not-allowed;
         }
         .loading-indicator {
-            color: #667eea;
+            color: #3b82f6;
             font-style: italic;
             font-size: 0.9rem;
         }
         .hidden-file-input {
             display: none;
         }
+    body {
+        font-family: 'Inter', sans-serif;
+        margin: 0;
+        padding: 12px;
+    background: linear-gradient(135deg, #3d5a80 0%, #98c1d9 100%);
+        min-height: 100vh;
+        line-height: 1.6;
+    }
+    .btn {
+        width: 100%;
+        padding: 14px 20px;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+    }
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+    }
+    .slider::-webkit-slider-thumb {
+        background: #3b82f6;
+        box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+    }
+    .vehicle-select:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    .loading-indicator {
+        color: #3b82f6;
+    }
+    .spinner {
+        border-top: 4px solid #3b82f6;
+    }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🚗 EV Road Trip Metric ⚡</h1>
+        <div style="width: 100%; margin: 0 0 24px 0; text-align: left; color: #4a5568; line-height: 1.5; display: flex; flex-direction: column; gap: 12px;">
+            <p style="margin: 0; font-size: 1rem;">
+                Choosing an EV for travel isn't just about range, as fuel efficiency and fast charging speeds matter too. This tool provides a simple, standardized way to see EV performance by simulating how long it takes a vehicle to complete a hypothetical long-distance trip and allowing you to compare performance across vehicles. By combining range, efficiency, and charging speed into one clear metric: time to travel 1,000 miles, this tool can help you understand which vehicle best meets your travel needs.
+            </p>
+        </div>
         <div class="main-content">
             <!-- Controls Panel -->
             <div class="controls-panel">
@@ -366,12 +429,16 @@
                     <label>Optimization Strategy</label>
                     <div style="margin-top: 8px;">
                         <div style="margin-bottom: 8px;">
-                            <input type="radio" id="strategyTime" name="optimizationStrategy" value="time" checked>
+                            <input type="radio" id="strategyTime" name="optimizationStrategy" value="time">
                             <label for="strategyTime" style="display: inline; margin-left: 6px; margin-bottom: 0; font-weight: normal;">Minimize Total Travel Time</label>
                         </div>
-                        <div>
+                        <div style="margin-bottom: 8px;">
                             <input type="radio" id="strategyStops" name="optimizationStrategy" value="stops">
                             <label for="strategyStops" style="display: inline; margin-left: 6px; margin-bottom: 0; font-weight: normal;">Minimize Charging Stops</label>
+                        </div>
+                        <div style="margin-bottom: 8px;">
+                            <input type="radio" id="strategyConventional" name="optimizationStrategy" value="conventional">
+                            <label for="strategyConventional" style="display: inline; margin-left: 6px; margin-bottom: 0; font-weight: normal;">Conventional Charging</label>
                         </div>
                     </div>
                 </div>
@@ -379,43 +446,53 @@
                 <div class="control-group">
                     <label for="drivingDistance" title="How far should the vehicle(s) drive?">Trip Distance (miles)</label>
                     <div class="input-container">
-                        <input type="range" id="drivingDistanceSlider" class="slider" min="100" max="3000" value="1000" step="50">
-                        <input type="number" id="drivingDistance" class="number-input" value="1000" min="100" max="3000" step="50">
+                        <input type="range" id="drivingDistanceSlider" class="slider" min="100" max="3000" step="50">
+                        <input type="number" id="drivingDistance" class="number-input" min="100" max="3000" step="50">
                     </div>
                 </div>
                 <div class="control-group">
                     <label for="chargerSpacing" title="How far apart should the charging stations be?">Distance Between Chargers (miles)</label>
                     <div class="input-container">
-                        <input type="range" id="chargerSpacingSlider" class="slider" min="25" max="150" value="50" step="25">
-                        <input type="number" id="chargerSpacing" class="number-input" value="50" min="25" max="150" step="25">
+                        <input type="range" id="chargerSpacingSlider" class="slider" min="25" max="150" step="25">
+                        <input type="number" id="chargerSpacing" class="number-input" min="25" max="150" step="25">
                     </div>
                 </div>
                 <div class="control-group">
                     <label for="chargerDetourDistance" title="How many miles does the vehicle need to drive off the main route to get to a charger (round-trip)?">Charger Detour Distance (miles)</label>
                     <div class="input-container">
-                        <input type="range" id="chargerDetourDistanceSlider" class="slider" min="1" max="10" value="2.5" step="0.5">
-                        <input type="number" id="chargerDetourDistance" class="number-input" value="2.5" min="1" max="10" step="0.5">
+                        <input type="range" id="chargerDetourDistanceSlider" class="slider" min="1" max="10" step="0.5">
+                        <input type="number" id="chargerDetourDistance" class="number-input" min="1" max="10" step="0.5">
                     </div>
                 </div>
                 <div class="control-group">
                     <label for="startSoc" title="What is the charge level of the vehicle when it first departs (%)?">Starting Charge Level (%)</label>
                     <div class="input-container">
-                        <input type="range" id="startSocSlider" class="slider" min="50" max="100" value="100" step="5">
-                        <input type="number" id="startSoc" class="number-input" value="100" min="50" max="100" step="5">
+                        <input type="range" id="startSocSlider" class="slider" min="50" max="100" step="5">
+                        <input type="number" id="startSoc" class="number-input" min="50" max="100" step="5">
                     </div>
                 </div>
-                <div class="control-group">
+                <div class="control-group" id="minSocGroup">
                     <label for="minSoc" title="What is the lowest charge level for vehicle during the trip (%)?">Minimum Charge Level (%)</label>
                     <div class="input-container">
-                        <input type="range" id="minSocSlider" class="slider" min="5" max="30" value="10" step="1">
-                        <input type="number" id="minSoc" class="number-input" value="10" min="5" max="30" step="1">
+                        <input type="range" id="minSocSlider" class="slider" min="5" max="30" step="1">
+                        <input type="number" id="minSoc" class="number-input" min="5" max="30" step="1">
+                    </div>
+                </div>
+                <div class="control-group" id="chargingWindowGroup" style="display:none;">
+                    <label for="chargingWindowSlider">Conventional Charging Window (%)</label>
+                    <div class="input-container" style="flex-direction:column;align-items:stretch;">
+                        <div id="chargingWindowSlider" style="margin: 10px 0 6px 0;"></div>
+                        <div style="display:flex;justify-content:space-between;">
+                            <span>Min: <span id="chargingWindowMinLabel">10</span>%</span>
+                            <span>Max: <span id="chargingWindowMaxLabel">80</span>%</span>
+                        </div>
                     </div>
                 </div>
                 <div class="control-group">
                     <label for="endRangeRequirement" title="What is the minimum range required at the end of the trip (miles)?">End of Trip Range Minimum (miles)</label>
                     <div class="input-container">
-                        <input type="range" id="endRangeRequirementSlider" class="slider" min="0" max="100" value="25" step="5">
-                        <input type="number" id="endRangeRequirement" class="number-input" value="25" min="0" max="100" step="5">
+                        <input type="range" id="endRangeRequirementSlider" class="slider" min="0" max="100" step="5">
+                        <input type="number" id="endRangeRequirement" class="number-input" min="0" max="100" step="5">
                     </div>
                 </div>
                 <button id="optimizeBtn" class="btn" disabled>Upload Vehicle XML File Above</button>
@@ -429,6 +506,28 @@
                         Select at least one vehicle and click "Show Results" to see results.
                     </p>
                 </div>
+                <!-- Loading indicator -->
+                <div id="loadingMessage" class="hidden">
+                    <div style="display: flex; flex-direction: column; align-items: center; margin-top: 50px;">
+                        <div class="spinner" style="margin-bottom: 16px;"></div>
+                        <span style="color: #3b82f6; font-size: 1.1em;">Calculating results...</span>
+                    </div>
+                </div>
+    <style>
+        /* ...existing code... */
+        .spinner {
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
                 <!-- Error message -->
                 <div id="errorMessage" class="error hidden"></div>
                 <!-- Results content -->
@@ -456,7 +555,7 @@
                     </div>
                     <!-- Charts: Compare Vehicles Side-by-Side -->
                     <div class="chart-container">
-                        <div class="chart-title">Total Travel Time By Activity</div>
+                        <div class="chart-title">Travel Time By Activity</div>
                         <div id="timeChartCombined"></div>
                     </div>
                     <div class="chart-container">
@@ -504,7 +603,7 @@
                             </div>
                         </div>
                     </div>
-                                       <div class="chart-container">
+                    <div class="chart-container">
                         <div class="chart-title">Vehicle Charging Curve</div>
                         <div id="curveChartCombined"></div>
                     </div>
@@ -514,23 +613,34 @@
         </div>
     </div>
     <script>
+    // Utility to bold and green the Total Travel Time row in the results table
+    function highlightTotalTravelTime() {
+        const resultsTable = document.getElementById('resultsTable');
+        if (!resultsTable) return;
+        for (let row of resultsTable.rows) {
+            if (row.cells.length > 0 && row.cells[0].textContent.replace(/\s+/g, '').toLowerCase() === 'totaltraveltime') {
+                for (let i = 1; i < row.cells.length; i++) {
+                    row.cells[i].classList.add('total-travel-time');
+                    row.cells[i].style.fontWeight = 'bold';
+                    row.cells[i].style.color = '#1db954';
+                    row.cells[i].style.background = '#eaffea';
+                    row.cells[i].style.fontSize = '1.08em';
+                }
+            }
+        }
+    }
 /**
  * EV Road Trip Metric Calculator
+ * Author: Aaron Sobel (Supported by GitHub Copilot)
+ * Concept: Aaron Sobel & Jarrod Brown
  *
- * This application optimizes electric vehicle charging strategies for long road trips.
+ * This application determines EV charging strategies to compare relative travel efficiency.
  * It uses dynamic programming to find the optimal charging stops and times to minimize
- * total trip time while ensuring the vehicle reaches its destination with the required
- * remaining range.
- * 
- * Key Features:
- * - Compare up to 2 different EV models
- * - Dynamic programming optimization algorithm
- * - Interactive charts and visualizations
- * - Exact end-of-trip range matching
- * - Fractional State-of-Charge (SoC) calculations for better precision
+ * total trip time or charging stops to provide users a simple metric of travel time.
+ *
  */
 
-class EvChargingOptimizer {
+    class EvChargingOptimizer {
     constructor() {
         // Vehicle 1 data
         this.vehicleName1 = null;
@@ -569,6 +679,12 @@ class EvChargingOptimizer {
         // Initialize the application
         this.setupEventListeners();
         this.loadGitHubVehicles();
+        // Patch: highlight total travel time after results are rendered
+        const origShowResults = this.showResults;
+        this.showResults = (...args) => {
+            origShowResults.apply(this, args);
+            setTimeout(highlightTotalTravelTime, 0);
+        };
     }
 
     /**
@@ -576,6 +692,24 @@ class EvChargingOptimizer {
      * This connects HTML elements to JavaScript functions
      */
     setupEventListeners() {
+        // jQuery UI dual-thumb slider for Conventional Charging Window
+        $(function() {
+            const sliderDefaults = formDefaults.chargingWindowSlider;
+            $("#chargingWindowSlider").slider({
+                range: true,
+                min: sliderDefaults.min,
+                max: sliderDefaults.max,
+                step: sliderDefaults.step,
+                values: sliderDefaults.values,
+                slide: function(event, ui) {
+                    $("#chargingWindowMinLabel").text(ui.values[0]);
+                    $("#chargingWindowMaxLabel").text(ui.values[1]);
+                }
+            });
+            // Set initial label values
+            $("#chargingWindowMinLabel").text(sliderDefaults.values[0]);
+            $("#chargingWindowMaxLabel").text(sliderDefaults.values[1]);
+        });
         // List of controls that have both sliders and number inputs
         const controls = [
             'drivingDistance', 'chargerDetourDistance', 'endRangeRequirement',
@@ -618,6 +752,16 @@ class EvChargingOptimizer {
         document.getElementById('optimizeBtn').addEventListener('click', this.optimizeTrip.bind(this));
         document.getElementById('clearXml1').addEventListener('click', () => this.clearVehicle(1));
         document.getElementById('clearXml2').addEventListener('click', () => this.clearVehicle(2));
+
+        // Show/hide minSoc and charging window controls based on strategy
+        const strategyRadios = document.querySelectorAll('input[name="optimizationStrategy"]');
+        strategyRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                const isConventional = document.getElementById('strategyConventional').checked;
+                document.getElementById('chargingWindowGroup').style.display = isConventional ? '' : 'none';
+                document.getElementById('minSocGroup').style.display = isConventional ? 'none' : '';
+            });
+        });
     }
 
     /**
@@ -629,6 +773,17 @@ class EvChargingOptimizer {
         document.getElementById('resultsContent').classList.add('hidden');
         document.getElementById('errorMessage').textContent = message;
         document.getElementById('errorMessage').classList.remove('hidden');
+    }
+
+    /**
+     * Shows the results panel and highlights total travel time
+     * (This method is patched in the constructor to call highlightTotalTravelTime)
+     */
+    showResults() {
+        document.getElementById('resultsContent').classList.remove('hidden');
+        document.getElementById('defaultMessage').classList.add('hidden');
+        this.hideError();
+        setTimeout(highlightTotalTravelTime, 0);
     }
 
     /**
@@ -930,18 +1085,220 @@ class EvChargingOptimizer {
      * @returns {Object} Parameters object with all trip settings
      */
     getParameters() {
-        const strategyRadio = document.querySelector('input[name="optimizationStrategy"]:checked');
-        return {
+    const strategyRadio = document.querySelector('input[name="optimizationStrategy"]:checked');
+        
+        const params = {
             drivingDistance: parseFloat(document.getElementById('drivingDistance').value),
             chargerDetourDistance: parseFloat(document.getElementById('chargerDetourDistance').value),
             endRangeRequirement: parseFloat(document.getElementById('endRangeRequirement').value),
             highwaySpeed: this.highwaySpeed,
             citySpeed: this.citySpeed,
             startSoc: parseFloat(document.getElementById('startSoc').value),
-            minSoc: parseFloat(document.getElementById('minSoc').value),
             chargerSpacing: parseFloat(document.getElementById('chargerSpacing').value),
             optimizationStrategy: strategyRadio ? strategyRadio.value : 'time'
         };
+        if (params.optimizationStrategy === 'conventional') {
+            const sliderVals = $("#chargingWindowSlider").slider("values");
+            params.chargingWindowMin = sliderVals[0];
+            params.chargingWindowMax = sliderVals[1];
+            params.minSoc = sliderVals[0]; // Use min from window for formulas
+        } else {
+            params.minSoc = parseFloat(document.getElementById('minSoc').value);
+        }
+        return params;
+    }
+
+    /**
+     * Implements the "Conventional Charging" strategy:
+     * - Always drive as far as possible within the allowed SoC window, then charge up to the window max (except for the final leg).
+     * - This simulates a typical human charging pattern: drive until a set low SoC, then charge to a set high SoC at each stop.
+     * - The algorithm is greedy, not globally optimal, but matches real-world behavior for this scenario.
+     *
+     * @param {Object} params - User-selected trip and charging window parameters
+     * @returns {Object} Log of actions and total trip time
+     */
+    optimizeConventionalCharging(params) {
+        // 1. Place chargers along the route at regular intervals
+        this.chargerPositions = [];
+        for (let pos = params.chargerSpacing; pos < params.drivingDistance; pos += params.chargerSpacing) {
+            this.chargerPositions.push(pos);
+        }
+
+        // 2. Initialize trip state
+        const log = [];
+        const windowMin = params.chargingWindowMin;
+        const windowMax = params.chargingWindowMax;
+        let soc = params.startSoc; // State of Charge (%)
+        let position = 0;         // Current position along the route (miles)
+        const tripDistance = params.drivingDistance;
+        const detour = params.chargerDetourDistance;
+        const endRange = params.endRangeRequirement;
+
+        let finished = false;
+        while (!finished) {
+            // --- Step 1: Can we reach the destination from here? ---
+            // If so, drive there and finish.
+            const milesToDest = tripDistance - position;
+            const socNeededToDest = this.milesToSoc(milesToDest + endRange, this.vehicleRange);
+
+            if (soc >= socNeededToDest) {
+                log.push({
+                    action: 'drive',
+                    from: position,
+                    to: tripDistance,
+                    actualDistance: milesToDest, // No detour for final destination
+                    socStart: soc,
+                    socEnd: soc - this.milesToSoc(milesToDest, this.vehicleRange),
+                    note: 'Drive to destination, trip complete.'
+                });
+                finished = true;
+                break;
+            }
+
+            // --- Step 2: Find the furthest reachable charger within the SoC window ---
+            // Only consider chargers that can be reached while staying above windowMin.
+            let furthestChargerIndex = -1;
+            let canReachAnyCharger = false;
+
+            for (let i = 0; i < this.chargerPositions.length; i++) {
+                const chargerPos = this.chargerPositions[i];
+                if (chargerPos <= position) continue; // Skip chargers we've passed
+
+                const milesToCharger = (chargerPos - position) + detour;
+                const socNeededToCharger = this.milesToSoc(milesToCharger, this.vehicleRange);
+                const socAfterDriveToCharger = soc - socNeededToCharger;
+
+                if (socAfterDriveToCharger >= windowMin) {
+                    furthestChargerIndex = i;
+                    canReachAnyCharger = true;
+                } else {
+                    break; // Can't reach this charger, so can't reach any further ones
+                }
+            }
+
+            if (!canReachAnyCharger) {
+                // This should not happen with reasonable parameters
+                return { error: 'Cannot reach any charger from current position' };
+            }
+
+            // --- Step 3: Drive to the furthest reachable charger ---
+            const targetChargerPos = this.chargerPositions[furthestChargerIndex];
+            const milesToTargetCharger = (targetChargerPos - position) + detour;
+            const socNeededToTargetCharger = this.milesToSoc(milesToTargetCharger, this.vehicleRange);
+            const socAfterDrive = soc - socNeededToTargetCharger;
+
+            log.push({
+                action: 'drive',
+                from: position,
+                to: targetChargerPos,
+                actualDistance: milesToTargetCharger, // Includes detour
+                socStart: soc,
+                socEnd: socAfterDrive,
+                note: `Drive to charger at mile ${targetChargerPos}`
+            });
+
+            soc = socAfterDrive;
+            position = targetChargerPos;
+
+            // --- Step 4: Charge at this charger ---
+            // If charging to windowMax is enough to reach the destination, only charge as much as needed.
+            const milesToDestFromHere = tripDistance - position;
+            const socNeededToDestFromHere = this.milesToSoc(milesToDestFromHere + endRange, this.vehicleRange);
+
+            let targetSoc;
+            if (windowMax >= socNeededToDestFromHere) {
+                // Only charge as much as needed to reach destination (but not below windowMin)
+                targetSoc = Math.max(socNeededToDestFromHere, windowMin);
+            } else {
+                // Otherwise, charge to windowMax
+                targetSoc = windowMax;
+            }
+
+            log.push({
+                action: 'charge',
+                at: position,
+                socStart: soc,
+                socEnd: targetSoc,
+                note: `Charge to ${targetSoc}% (window max)`
+            });
+
+            soc = targetSoc;
+        }
+
+        // --- Step 5: Calculate total trip time (driving, charging, detours) ---
+        let totalTime = 0;
+        let detourCount = 0;
+
+        for (const step of log) {
+            if (step.action === 'drive') {
+                // Highway driving time (main route only)
+                const directDistance = step.to - step.from;
+                const highwayTime = directDistance / params.highwaySpeed;
+                totalTime += highwayTime;
+
+                // Count detours (if actual distance > direct distance)
+                if (step.actualDistance && step.actualDistance > directDistance) {
+                    detourCount++;
+                }
+            } else if (step.action === 'charge') {
+                // Charging time (from SoC start to end)
+                const chargeTime = this.calculateChargingTime(step.socStart, step.socEnd);
+                totalTime += chargeTime;
+            }
+        }
+
+        // Add detour time (at city speed)
+        const detourTime = detourCount * params.chargerDetourDistance / params.citySpeed;
+        totalTime += detourTime;
+
+        return { path: log, strategyUsed: 'Conventional Charging', optimalTime: totalTime };
+    }
+
+    /**
+     * Convert conventional charging log to standard format expected by charts/tables
+     */
+    convertConventionalLogToStandardFormat(log) {
+        const standardPath = [];
+        let i = 0;
+        
+        while (i < log.length) {
+            const currentStep = log[i];
+            
+            if (currentStep.action === 'drive') {
+                // Check if this is followed by a charge step
+                const nextStep = log[i + 1];
+                if (nextStep && nextStep.action === 'charge') {
+                    // This is drive-to-charger followed by charge
+                    const chargingTime = this.calculateChargingTime(nextStep.socStart, nextStep.socEnd);
+                    
+                    standardPath.push({
+                        action: 'driveAndCharge',
+                        fromPosition: currentStep.from,
+                        toPosition: currentStep.to,
+                        socStart: currentStep.socStart, // SoC at start of drive
+                        socAtCharger: currentStep.socEnd, // SoC when arriving at charger
+                        socAfterCharge: nextStep.socEnd, // SoC after charging
+                        chargeTimeHours: chargingTime
+                    });
+                    i += 2; // Skip both drive and charge steps
+                } else {
+                    // This is drive-only (probably to destination)
+                    standardPath.push({
+                        action: 'driveToEnd',
+                        fromPosition: currentStep.from,
+                        toPosition: currentStep.to,
+                        socStart: currentStep.socStart,
+                        socEnd: currentStep.socEnd
+                    });
+                    i++;
+                }
+            } else {
+                // Unexpected step type, skip it
+                i++;
+            }
+        }
+        
+        return standardPath;
     }
 
     /**
@@ -1058,48 +1415,54 @@ class EvChargingOptimizer {
     }
 
     /**
-     * MAIN OPTIMIZATION ALGORITHM
-     * Uses Dynamic Programming to find the optimal charging strategy
-     * 
-     * The algorithm works backwards from the destination, calculating the minimum
-     * time needed to complete the trip from each possible position and SoC state.
-     * 
+     * MAIN OPTIMIZATION ALGORITHM (Minimize Total Travel Time)
+     *
+     * Uses Dynamic Programming to find the globally optimal charging strategy for a trip.
+     * - Considers all possible charging stops and SoC levels at each position.
+     * - Works backwards from the destination, filling a DP table with the minimum time
+     *   needed to complete the trip from each possible position and SoC state.
+     * - At each step, considers driving directly to the end or to each reachable charger,
+     *   then charging to any higher SoC and continuing optimally.
+     * - Reconstructs the optimal path by following the best decisions from the DP table.
+     *
+     * This is the most flexible and globally optimal strategy, but is computationally intensive.
+     *
      * @param {Object} params - Trip parameters from user input
      * @returns {Object} Optimization result with optimal time and path
      */
     optimizeChargingStrategy(params) {
-        // STEP 1: Setup charger positions along the route
+    // STEP 1: Place chargers along the route at regular intervals
         this.chargerPositions = [];
         for (let pos = params.chargerSpacing; pos < params.drivingDistance; pos += params.chargerSpacing) {
             this.chargerPositions.push(pos);
         }
         
-        // STEP 2: Initialize Dynamic Programming tables
+    // STEP 2: Initialize Dynamic Programming tables for all positions and SoC levels
         this.dpTable = {};    // dpTable[position][soc] = minimum time to complete trip
         this.decisions = {};  // decisions[position][soc] = optimal action to take
         
-        // STEP 3: Setup fractional SoC levels for precise calculations
+    // STEP 3: Setup fractional SoC levels for precise calculations (e.g., 0.5% increments)
         const socStep = 0.5;  // Use 0.5% increments for precision
         const minEndSoc = this.milesToSoc(params.endRangeRequirement, this.vehicleRange);
         
-        // Create array of all possible SoC levels to consider
+    // Create array of all possible SoC levels to consider (from min to 100%)
         const startingSoc = Math.min(params.minSoc, minEndSoc);
         const socLevels = [];
         for (let soc = Math.floor(startingSoc * 2) / 2; soc <= 100; soc = +(soc + socStep).toFixed(2)) {
             socLevels.push(+soc.toFixed(2));
         }
         
-        // Ensure the exact end SoC is included for precise matching
+    // Ensure the exact end SoC is included for precise matching (for end-of-trip requirement)
         const roundedEndSoc = +(Math.round(minEndSoc * 2) / 2).toFixed(2);
         if (!socLevels.includes(roundedEndSoc)) {
             socLevels.push(roundedEndSoc);
             socLevels.sort((a, b) => a - b);
         }
         
-        // STEP 4: Create all positions (start, chargers, destination)
+    // STEP 4: Create all positions (start, each charger, and destination)
         const positions = [0, ...this.chargerPositions, params.drivingDistance].sort((a, b) => a - b);
         
-        // STEP 5: Initialize DP tables with infinity (impossible states)
+    // STEP 5: Initialize DP tables with Infinity (impossible states)
         positions.forEach(pos => {
             this.dpTable[pos] = {};
             this.decisions[pos] = {};
@@ -1109,19 +1472,20 @@ class EvChargingOptimizer {
             });
         });
         
-        // STEP 6: Set base case - destination with at least the required end range
+    // STEP 6: Set base case - destination with at least the required end range (0 time needed)
         socLevels.forEach(soc => {
             if (soc >= minEndSoc) {
                 this.dpTable[params.drivingDistance][soc] = 0.0;  // No time needed at destination
             }
         });
         
-        // STEP 7: Fill DP table backwards from destination to start
+    // STEP 7: Fill DP table backwards from destination to start
+    // For each position and SoC, consider all possible next moves
         for (let i = positions.length - 2; i >= 0; i--) {
             const currentPos = positions[i];
             
             socLevels.forEach(currentSoc => {
-                // OPTION 1: Drive directly to destination (if reachable)
+                // OPTION 1: Drive directly to destination (if reachable with current SoC)
                 if (this.canReachPosition(currentPos, currentSoc, params.drivingDistance, params, true)) {
                     const distance = params.drivingDistance - currentPos;
                     const travelTime = this.calculateTravelTime(distance, false, params);
@@ -1135,6 +1499,7 @@ class EvChargingOptimizer {
                 }
                 
                 // OPTION 2: Drive to a charger, charge up, then continue optimally
+                // For each reachable charger, try all possible charge-to SoC levels
                 const reachableChargers = this.getReachableChargers(currentPos, currentSoc, params);
                 reachableChargers.forEach(nextCharger => {
                     const distanceToCharger = (nextCharger - currentPos) + params.chargerDetourDistance;
@@ -1163,7 +1528,7 @@ class EvChargingOptimizer {
             });
         }
         
-        // STEP 8: Extract the optimal solution
+    // STEP 8: Extract the optimal solution by following the best decisions from the DP table
         // Find the closest SoC in socLevels to the user's starting SoC
         function findClosestSoc(target, socArr) {
             return socArr.reduce((prev, curr) => Math.abs(curr - target) < Math.abs(prev - target) ? curr : prev);
@@ -1172,7 +1537,7 @@ class EvChargingOptimizer {
         const startSoc = findClosestSoc(params.startSoc, socLevels);
         const optimalTime = this.dpTable[0][startSoc];
         
-        // STEP 9: Check if a valid solution was found
+    // STEP 9: Check if a valid solution was found (Infinity means no valid path)
         if (optimalTime === Infinity) {
             const endRangeMiles = params.endRangeRequirement;
             const endRangeSoc = this.milesToSoc(endRangeMiles, this.vehicleRange);
@@ -1188,7 +1553,7 @@ class EvChargingOptimizer {
             return { optimalTime: Infinity, path: [] };
         }
         
-        // STEP 10: Reconstruct the optimal path by following decisions
+    // STEP 10: Reconstruct the optimal path by following decisions
         const path = [];
         let currentPos = 0;
         let currentSoc = startSoc;
@@ -1457,7 +1822,13 @@ class EvChargingOptimizer {
     optimizeWithStrategy(params) {
         let result;
         
-        if (params.optimizationStrategy === 'stops') {
+        if (params.optimizationStrategy === 'conventional') {
+            result = this.optimizeConventionalCharging(params);
+            if (result && result.path) {
+                const convertedPath = this.convertConventionalLogToStandardFormat(result.path);
+                result.path = convertedPath;
+            }
+        } else if (params.optimizationStrategy === 'stops') {
             result = this.optimizeMinimumStops(params);
         } else {
             result = this.optimizeChargingStrategy(params);
@@ -1465,26 +1836,40 @@ class EvChargingOptimizer {
 
         // Add strategy metadata to results
         if (result && !result.error && !result.path || (result.path && result.path.length > 0)) {
-            result.strategyUsed = params.optimizationStrategy === 'stops' ? 'Minimize Charging Stops' : 'Minimize Total Travel Time';
+            if (params.optimizationStrategy === 'conventional') {
+                result.strategyUsed = 'Conventional Charging';
+            } else {
+                result.strategyUsed = params.optimizationStrategy === 'stops' ? 'Minimize Charging Stops' : 'Minimize Total Travel Time';
+            }
         }
 
         return result;
     }
 
     /**
-     * START MODULE FOR MINIMIZING STOP FUNCTIONALITY
-     * Lexicographic optimization: minimize stops first, then minimize time
+     * MINIMIZE CHARGING STOPS STRATEGY
+     *
+     * Lexicographic optimization: minimize the number of charging stops first,
+     * then among all such solutions, minimize total travel time.
+     *
+     * - First, checks if the trip can be completed with zero stops.
+     * - If not, finds the minimum number of stops required using a greedy approach.
+     * - Then, uses a modified DP algorithm to find the fastest trip using exactly that many stops.
+     *
+     * This strategy is useful for users who want to minimize the inconvenience of stopping,
+     * even if it doesn't always minimize total time.
+     *
      * @param {Object} params - Trip parameters
      * @returns {Object} Optimization results
      */
     optimizeMinimumStops(params) {
         const { drivingDistance, startSoc, minSoc, endRangeRequirement } = params;
         
-        // Quick feasibility check - can we do the trip at all?
+    // Quick feasibility check - can we do the trip at all with no charging?
         const endSocRequired = endRangeRequirement / this.vehicleRange * 100;
         const effectiveEndSoc = Math.max(endSocRequired, minSoc);
         
-        // Try with zero stops first
+    // Try with zero stops first (if possible, return immediately)
         const finalSocWithoutCharging = startSoc - (drivingDistance / this.vehicleRange * 100);
         if (finalSocWithoutCharging >= effectiveEndSoc) {
             // Trip possible without charging!
@@ -1500,29 +1885,33 @@ class EvChargingOptimizer {
             };
         }
         
-        // STAGE 1: Find minimum number of stops needed
+    // STAGE 1: Find minimum number of stops needed (greedy, not optimal time)
         const minStopsNeeded = this.findMinimumStopsRequired(params);
         if (minStopsNeeded === -1) {
             return { error: 'No feasible solution found with minimum stops strategy' };
         }
         
-        // STAGE 2: Among all solutions with minimum stops, find the one with minimum time
+    // STAGE 2: Among all solutions with minimum stops, find the one with minimum time (DP)
         return this.optimizeTimeWithFixedStops(params, minStopsNeeded);
     }
 
     /**
-     * Find the absolute minimum number of charging stops required using a simpler, correct approach
+     * Finds the absolute minimum number of charging stops required (greedy approach).
+     *
+     * - Simulates driving as far as possible on each full charge, stopping only when necessary.
+     * - Returns -1 if the trip is impossible with the given charger spacing and vehicle parameters.
+     *
      * @param {Object} params - Trip parameters
      * @returns {number} Minimum stops needed, or -1 if impossible
      */
     findMinimumStopsRequired(params) {
         const { drivingDistance, startSoc, minSoc, endRangeRequirement, chargerSpacing } = params;
         
-        // Calculate maximum range per charge cycle
+    // Calculate maximum range per charge cycle (from 100% to minSoC, minus detour)
         const maxUsableRange = this.socToMiles(100 - minSoc, this.vehicleRange);
         const maxProgressPerCycle = maxUsableRange - params.chargerDetourDistance;
         
-        // Check if trip is possible without charging
+    // Check if trip is possible without charging (initial range covers trip + end requirement)
         const initialRange = this.socToMiles(startSoc, this.vehicleRange);
         const rangeNeededForTrip = drivingDistance + endRangeRequirement;
         
@@ -1530,7 +1919,7 @@ class EvChargingOptimizer {
             return 0;
         }
         
-        // Calculate remaining distance after using initial charge
+    // Calculate remaining distance after using initial charge (down to minSoC)
         const initialUsableRange = this.socToMiles(startSoc - minSoc, this.vehicleRange);
         const remainingAfterInitial = drivingDistance + endRangeRequirement - initialUsableRange;
         
@@ -1538,22 +1927,22 @@ class EvChargingOptimizer {
             return 0; // No charging needed
         }
         
-        // Calculate minimum stops needed for remaining distance
+    // Calculate minimum stops needed for remaining distance (may not be feasible with charger spacing)
         const stopsNeeded = Math.ceil(remainingAfterInitial / maxProgressPerCycle);
         
-        // Verify this is actually achievable with the charger spacing
+    // Verify this is actually achievable with the charger spacing (greedy simulation)
         const chargerPositions = [];
         for (let pos = chargerSpacing; pos < drivingDistance; pos += chargerSpacing) {
             chargerPositions.push(pos);
         }
         
-        // Simple greedy verification: can we actually reach chargers with this strategy?
+    // Simple greedy verification: can we actually reach chargers with this strategy?
         let currentPos = 0;
         let currentSoc = startSoc;
         let actualStops = 0;
         
         while (currentPos < drivingDistance) {
-            // Check if we can reach destination
+            // Check if we can reach destination from current position
             const currentRange = this.socToMiles(currentSoc, this.vehicleRange);
             const distanceToEnd = drivingDistance - currentPos;
             
@@ -1561,7 +1950,7 @@ class EvChargingOptimizer {
                 break;
             }
             
-            // Find next reachable charger
+            // Find next reachable charger (within usable range)
             const usableRange = this.socToMiles(currentSoc - minSoc, this.vehicleRange);
             let nextCharger = null;
             
@@ -1580,7 +1969,7 @@ class EvChargingOptimizer {
                 return -1;
             }
             
-            // Go to charger and charge to 100%
+            // Go to charger and charge to 100% (for minimum stops)
             const travelDistance = (nextCharger - currentPos) + params.chargerDetourDistance;
             const socUsed = this.milesToSoc(travelDistance, this.vehicleRange);
             
@@ -1593,7 +1982,12 @@ class EvChargingOptimizer {
     }
 
     /**
-     * Optimize for minimum time using exactly the specified number of stops
+     * Finds the fastest trip using exactly the specified number of stops (DP).
+     *
+     * - Uses a 3D DP table: position, SoC, and number of stops used.
+     * - At each step, considers driving to the end (if stops used up), or to each reachable charger and charging to any higher SoC.
+     * - Reconstructs the optimal path by following the best decisions.
+     *
      * @param {Object} params - Trip parameters
      * @param {number} requiredStops - Exact number of stops to use
      * @returns {Object} Optimization results
@@ -1608,8 +2002,8 @@ class EvChargingOptimizer {
             this.chargerPositions.push(pos);
         }
         
-        // Use dynamic programming with an additional dimension for number of stops used
-        // dpTableStops[position][soc][stopsUsed] = minimum time
+    // Use dynamic programming with an additional dimension for number of stops used
+    // dpTableStops[position][soc][stopsUsed] = minimum time to finish trip
         const dpTableStops = {};
         const decisionsStops = {};
         
@@ -1623,7 +2017,7 @@ class EvChargingOptimizer {
         
         const positions = [0, ...this.chargerPositions, drivingDistance].sort((a, b) => a - b);
         
-        // Initialize DP tables
+    // Initialize DP tables for all positions, SoC levels, and stops used
         positions.forEach(pos => {
             dpTableStops[pos] = {};
             decisionsStops[pos] = {};
@@ -1637,20 +2031,20 @@ class EvChargingOptimizer {
             });
         });
         
-        // Base case: destination with exactly requiredStops
+    // Base case: destination with exactly requiredStops (0 time needed)
         socLevels.forEach(soc => {
             if (soc >= minEndSoc) {
                 dpTableStops[drivingDistance][soc][requiredStops] = 0.0;
             }
         });
         
-        // Fill DP table backwards
+    // Fill DP table backwards from destination to start
         for (let i = positions.length - 2; i >= 0; i--) {
             const currentPos = positions[i];
             
             socLevels.forEach(currentSoc => {
                 for (let stopsUsed = 0; stopsUsed <= requiredStops; stopsUsed++) {
-                    // Option 1: Drive directly to destination (no additional stops)
+                    // Option 1: Drive directly to destination (if all stops used)
                     if (stopsUsed === requiredStops && this.canReachPosition(currentPos, currentSoc, drivingDistance, params, true)) {
                         const distance = drivingDistance - currentPos;
                         const travelTime = this.calculateTravelTime(distance, false, params);
@@ -1672,7 +2066,7 @@ class EvChargingOptimizer {
                             
                             if (socAtCharger < params.minSoc) return;
                             
-                            // Try different charging levels
+                            // Try different charging levels (charge to any higher SoC)
                             for (let chargeToSoc = Math.ceil(socAtCharger * 2) / 2 + socStep; chargeToSoc <= 100; chargeToSoc = +(chargeToSoc + socStep).toFixed(2)) {
                                 const chargingTime = this.calculateChargingTime(socAtCharger, chargeToSoc);
                                 const nextStopsUsed = stopsUsed + 1;
@@ -1695,7 +2089,7 @@ class EvChargingOptimizer {
             });
         }
         
-        // Extract solution with exactly requiredStops
+    // Extract solution with exactly requiredStops by following best decisions
         function findClosestSoc(target, socArr) {
             return socArr.reduce((prev, curr) => Math.abs(curr - target) < Math.abs(prev - target) ? curr : prev);
         }
@@ -1707,7 +2101,7 @@ class EvChargingOptimizer {
             return { error: `No feasible solution found with exactly ${requiredStops} stops` };
         }
         
-        // Reconstruct path
+    // Reconstruct path by following best decisions
         const path = [];
         let currentPos = 0;
         let currentSoc = optimalStartSoc;
@@ -1751,7 +2145,8 @@ class EvChargingOptimizer {
     }
 
     /**
-     * Calculate travel time for a given distance (simple version for minimum stops strategy)
+     * Simple travel time calculation (used for minimum stops strategy when no charging is needed).
+     * Assumes highway speed for the entire distance.
      * @param {number} distance - Distance in miles
      * @param {Object} params - Parameters containing speed information
      * @returns {number} Travel time in hours
@@ -1762,7 +2157,7 @@ class EvChargingOptimizer {
     }
 
     /**
-     * Calculate battery capacity from the charging curve
+     * Calculate battery capacity from the charging curve (difference between 100% and 0% SoC).
      * @returns {number} Battery capacity in kWh
      */
     calculateBatteryCapacity() {
@@ -1772,20 +2167,27 @@ class EvChargingOptimizer {
         return energyAt100 - energyAt0;
     }
 
+    /**
+     * Main entry point for optimization: runs the selected strategy for one or two vehicles.
+     * Handles all error checking and result display logic.
+     */
     optimizeTrip() {
         if (!this.chargingCurve1) {
             this.showError('Please upload at least one XML file.');
             return;
         }
+        // Show loading spinner and hide results/default/error
+        document.getElementById('defaultMessage').classList.add('hidden');
+        document.getElementById('resultsContent').classList.add('hidden');
+        document.getElementById('errorMessage').classList.add('hidden');
+        document.getElementById('loadingMessage').classList.remove('hidden');
         setTimeout(() => {
             try {
                 const params = this.getParameters();
-                
                 // Vehicle 1 - Use strategy-aware optimization
                 this.vehicleRange = this.vehicleRange1;
                 this.chargingCurve = this.chargingCurve1;
                 const result1 = this.optimizeWithStrategy(params);
-                
                 let result2 = null;
                 if (
                     this.chargingCurve2 &&
@@ -1801,21 +2203,31 @@ class EvChargingOptimizer {
                 this.displayComparisonResults(result1, result2, params);
             } catch (error) {
                 this.showError('Optimization error: ' + error.message);
+            } finally {
+                // Hide loading spinner after calculation
+                document.getElementById('loadingMessage').classList.add('hidden');
             }
         }, 100);
     }
 
+    /**
+     * Displays the results of the optimization(s) in the UI, including tables and charts.
+     * Handles both single-vehicle and comparison mode.
+     */
     displayComparisonResults(result1, result2, params) {
         this.hideError();
+        document.getElementById('loadingMessage').classList.add('hidden');
         document.getElementById('defaultMessage').classList.add('hidden');
         document.getElementById('resultsContent').classList.remove('hidden');
 
         if (!result1.path.length) {
             this.showError('No valid trip found for the uploaded vehicle with the current parameters.');
+            document.getElementById('loadingMessage').classList.add('hidden');
             return;
         }
         if (result2 && !result2.path.length) {
             this.showError('No valid trip found for the second vehicle with the current parameters.');
+            document.getElementById('loadingMessage').classList.add('hidden');
             return;
         }
 
@@ -1829,7 +2241,7 @@ class EvChargingOptimizer {
         let scenarioHtml = `<tr><th></th><th>${this.vehicleName1}</th>`;
         if (result2) scenarioHtml += `<th>${this.vehicleName2}</th>`;
         scenarioHtml += `</tr>`;
-        scenarioHtml += `<tr><th>Vehicle Range</th><td>${this.vehicleRange1}</td>`;
+        scenarioHtml += `<tr><th>Vehicle Range (70mph)</th><td>${this.vehicleRange1}</td>`;
         if (result2) scenarioHtml += `<td>${this.vehicleRange2}</td>`;
         scenarioHtml += `</tr>`;
         document.getElementById('scenarioTable').innerHTML = scenarioHtml;
@@ -1851,11 +2263,12 @@ class EvChargingOptimizer {
         resultsHtml += [
             ['Total Travel Time', this.formatTime(result1.optimalTime), result2 ? this.formatTime(result2.optimalTime) : null],
             ['Charging Stops', result1.path.filter(s => s.action === 'driveAndCharge').length, result2 ? result2.path.filter(s => s.action === 'driveAndCharge').length : null],
-            ['End Vehicle Range', `${endRange1.toFixed(1)} mi`, result2 ? `${endRange2.toFixed(1)} mi` : null]
+            ['Vehicle Range at Destination', `${endRange1.toFixed(1)} mi`, result2 ? `${endRange2.toFixed(1)} mi` : null]
         ].map(([label, v1, v2]) =>
             `<tr><th>${label}</th><td>${v1}</td>${result2 ? `<td>${v2}</td>` : ''}</tr>`
         ).join('');
-        document.getElementById('resultsTable').innerHTML = resultsHtml;
+    document.getElementById('resultsTable').innerHTML = resultsHtml;
+    setTimeout(highlightTotalTravelTime, 0);
 
         // Charts
         const times1 = this.getTimeBreakdown(result1, params);
@@ -1920,6 +2333,9 @@ class EvChargingOptimizer {
         this.setupDpExplorerControls();
     }
 
+    /**
+     * Prepares the DP decision explorer for one or two vehicles, allowing step-by-step exploration of the optimal path.
+     */
     setupDpExplorerForVehicles(result1, result2, params) {
         // Store DP data for both vehicles
         this.dpExplorerDataByVehicle = [];
@@ -1963,12 +2379,18 @@ class EvChargingOptimizer {
         };
     }
 
+    /**
+     * Updates the DP explorer data and re-renders the explorer chart for the selected vehicle.
+     */
     updateDpExplorerData() {
         const v = this.dpExplorerDataByVehicle[this.dpExplorerVehicleIdx];
         this.storeDpChoicesForExplorer(v.path, v.params, v.vehicleRange);
         this.renderDpDecisionExplorer();
     }
 
+    /**
+     * Computes the breakdown of total trip time into driving, detour, and charging components for charting.
+     */
     getTimeBreakdown(result, params) {
         const numDetours = result.path.filter(step => step.action === 'driveAndCharge').length;
         let drivingTime = params.drivingDistance / params.highwaySpeed;
@@ -1985,6 +2407,7 @@ class EvChargingOptimizer {
     /**
      * CHART GENERATION FUNCTIONS
      * These functions create interactive Highcharts visualizations to display optimization results
+     * (Travel time, SoC, range, charging curve, timeline, charger summary)
      */
     
     /**
@@ -2379,11 +2802,11 @@ class EvChargingOptimizer {
         const chargerPositions = this.chargerPositions;
         let tableHtml = `<table style="width:100%; border-collapse:collapse;">
             <tr>
-                <th style="padding:8px; border-bottom:1px solid #eee;">Charger Position (miles)</th>
+                <th style="padding:8px; border-bottom:1px solid #eee;">Charger Location (miles)</th>
                 <th style="padding:8px; border-bottom:1px solid #eee;">Used?</th>
-                <th style="padding:8px; border-bottom:1px solid #eee;">Charge Level Before</th>
-                <th style="padding:8px; border-bottom:1px solid #eee;">Charge Level After</th>
-                <th style="padding:8px; border-bottom:1px solid #eee;">Charging Time (min)</th>
+                <th style="padding:8px; border-bottom:1px solid #eee;">Arrival Charge Level (%)</th>
+                <th style="padding:8px; border-bottom:1px solid #eee;">Departure Charge Level (%)</th>
+                <th style="padding:8px; border-bottom:1px solid #eee;">Charging Time (minutes)</th>
             </tr>`;
         chargerPositions.forEach(pos => {
             const step = path.find(s => s.action === 'driveAndCharge' && s.toPosition === pos);
@@ -2408,10 +2831,85 @@ class EvChargingOptimizer {
  * ====================================================================================
  * 
  * This section runs when the webpage loads and sets up the application
+ * Aaron, change default values here
  */
 
+// Centralized form defaults configuration
+//
+// All default values for the form and UI are set here for easy maintenance.
+const formDefaults = {
+    // Optimization strategy
+    optimizationStrategy: 'time', // 'time', 'stops', or 'conventional'
+    
+    // Trip parameters
+    drivingDistance: 1000,
+    chargerSpacing: 50,
+    chargerDetourDistance: 2.5,
+    startSoc: 100,
+    minSoc: 10,
+    endRangeRequirement: 25,
+    
+    // Charging window
+    chargingWindowMin: 10,
+    chargingWindowMax: 80,
+    chargingWindowSlider: {
+        min: 5,
+        max: 100,
+        step: 5,
+        values: [10, 80]
+    },
+    
+    // Vehicle selections
+    vehicle1Index: 0,
+    vehicle2Index: 0
+};
+
+// Function to dynamically set HTML default values from centralized config
+//
+// This ensures that all form controls are initialized consistently from formDefaults.
+function setHtmlDefaults() {
+    // Set input default values
+    const inputMappings = {
+    'drivingDistanceSlider': formDefaults.drivingDistance,
+    'drivingDistance': formDefaults.drivingDistance,
+    'chargerSpacingSlider': formDefaults.chargerSpacing,
+    'chargerSpacing': formDefaults.chargerSpacing,
+    'chargerDetourDistanceSlider': formDefaults.chargerDetourDistance,
+    'chargerDetourDistance': formDefaults.chargerDetourDistance,
+    'startSocSlider': formDefaults.startSoc,
+    'startSoc': formDefaults.startSoc,
+    'minSocSlider': formDefaults.minSoc,
+    'minSoc': formDefaults.minSoc,
+    'endRangeRequirementSlider': formDefaults.endRangeRequirement,
+    'endRangeRequirement': formDefaults.endRangeRequirement
+    };
+    
+    // Apply default values to HTML elements
+    Object.entries(inputMappings).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.setAttribute('value', value);
+            element.value = value; // Also set current value
+        }
+    });
+    
+    // Set default optimization strategy
+    const strategyRadios = document.querySelectorAll('input[name="optimizationStrategy"]');
+    strategyRadios.forEach(radio => {
+    radio.checked = (radio.value === formDefaults.optimizationStrategy);
+    });
+}
+
 // Initialize the app and DP explorer controls when the page loads
+//
+// This is the main entry point for the web application.
 document.addEventListener('DOMContentLoaded', () => {
+    // Set HTML default values from centralized configuration
+    setHtmlDefaults();
+    
+    // Reset all form values to defaults to prevent browser persistence
+    resetFormToDefaults();
+    
     // Create a new instance of the EV charging optimizer
     const optimizer = new EvChargingOptimizer();
     
@@ -2424,6 +2922,82 @@ document.addEventListener('DOMContentLoaded', () => {
     // Note: All calculation logic is triggered by user interaction through the UI
     // The main "Calculate" button calls optimizer.calculateAndDisplayResults()
 });
+
+// Function to reset all form values to their defaults using centralized config
+//
+// This is called on page load to ensure a clean, predictable UI state.
+function resetFormToDefaults() {
+    // Reset vehicle dropdowns
+    const vehicle1Select = document.getElementById('vehicleSelect1');
+    const vehicle2Select = document.getElementById('vehicleSelect2');
+    if (vehicle1Select) vehicle1Select.selectedIndex = formDefaults.vehicle1Index;
+    if (vehicle2Select) vehicle2Select.selectedIndex = formDefaults.vehicle2Index;
+    
+    // Reset optimization strategy based on centralized default
+    const strategyRadios = {
+        'time': document.getElementById('strategyTime'),
+        'stops': document.getElementById('strategyStops'),
+        'conventional': document.getElementById('strategyConventional')
+    };
+    
+    // Uncheck all strategy radios first
+    Object.values(strategyRadios).forEach(radio => {
+        if (radio) radio.checked = false;
+    });
+    
+    // Check the default strategy
+    const defaultStrategyRadio = strategyRadios[formDefaults.optimizationStrategy];
+    if (defaultStrategyRadio) defaultStrategyRadio.checked = true;
+    
+    // Reset all sliders and number inputs using centralized defaults
+    const formElements = {
+        'drivingDistance': formDefaults.drivingDistance,
+        'drivingDistanceSlider': formDefaults.drivingDistance,
+        'chargerSpacing': formDefaults.chargerSpacing,
+        'chargerSpacingSlider': formDefaults.chargerSpacing,
+        'chargerDetourDistance': formDefaults.chargerDetourDistance,
+        'chargerDetourDistanceSlider': formDefaults.chargerDetourDistance,
+        'startSoc': formDefaults.startSoc,
+        'startSocSlider': formDefaults.startSoc,
+        'minSoc': formDefaults.minSoc,
+        'minSocSlider': formDefaults.minSoc,
+        'endRangeRequirement': formDefaults.endRangeRequirement,
+        'endRangeRequirementSlider': formDefaults.endRangeRequirement
+    };
+    
+    // Apply default values
+    Object.entries(formElements).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.value = value;
+        }
+    });
+    
+    // Reset charging window slider using centralized defaults
+    const chargingWindowElement = document.getElementById('chargingWindowSlider');
+    if (chargingWindowElement && window.$ && window.$.fn.slider) {
+        // Wait for jQuery UI to be available
+        setTimeout(() => {
+            try {
+                $(chargingWindowElement).slider('values', [formDefaults.chargingWindowMin, formDefaults.chargingWindowMax]);
+            } catch (e) {
+                // Fallback if slider not initialized yet
+            }
+        }, 100);
+    }
+    
+    // Clear file inputs
+    const xmlFile1 = document.getElementById('xmlFile1');
+    const xmlFile2 = document.getElementById('xmlFile2');
+    if (xmlFile1) xmlFile1.value = '';
+    if (xmlFile2) xmlFile2.value = '';
+    
+    // Clear any results panels
+    const resultsPanel = document.querySelector('.results-panel .results-content');
+    if (resultsPanel) {
+        resultsPanel.innerHTML = '<p>Configure your trip parameters and click "Calculate" to see results.</p>';
+    }
+}
 </script>
 </body>
 </html>

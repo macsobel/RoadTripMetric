@@ -17,7 +17,7 @@
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             min-height: 100vh;
             line-height: 1.6;
         }
@@ -89,7 +89,7 @@
             width: 20px;
             height: 20px;
             border-radius: 50%;
-            background: #667eea;
+            background: #3b82f6;
             cursor: pointer;
             box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
         }
@@ -105,13 +105,13 @@
         }
         .number-input:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         .btn {
             width: 100%;
             padding: 14px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
             border: none;
             border-radius: 8px;
@@ -333,7 +333,7 @@
         }
         .vehicle-select:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         .vehicle-select:disabled {
@@ -342,13 +342,53 @@
             cursor: not-allowed;
         }
         .loading-indicator {
-            color: #667eea;
+            color: #3b82f6;
             font-style: italic;
             font-size: 0.9rem;
         }
         .hidden-file-input {
             display: none;
         }
+    body {
+        font-family: 'Inter', sans-serif;
+        margin: 0;
+        padding: 12px;
+    background: linear-gradient(135deg, #3d5a80 0%, #98c1d9 100%);
+        min-height: 100vh;
+        line-height: 1.6;
+    }
+    .btn {
+        width: 100%;
+        padding: 14px 20px;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+    }
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+    }
+    .slider::-webkit-slider-thumb {
+        background: #3b82f6;
+        box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+    }
+    .vehicle-select:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    .loading-indicator {
+        color: #3b82f6;
+    }
+    .spinner {
+        border-top: 4px solid #3b82f6;
+    }
     </style>
 </head>
 <body>
@@ -470,14 +510,14 @@
                 <div id="loadingMessage" class="hidden">
                     <div style="display: flex; flex-direction: column; align-items: center; margin-top: 50px;">
                         <div class="spinner" style="margin-bottom: 16px;"></div>
-                        <span style="color: #667eea; font-size: 1.1em;">Calculating results...</span>
+                        <span style="color: #3b82f6; font-size: 1.1em;">Calculating results...</span>
                     </div>
                 </div>
     <style>
         /* ...existing code... */
         .spinner {
             border: 4px solid #e2e8f0;
-            border-top: 4px solid #667eea;
+            border-top: 4px solid #3b82f6;
             border-radius: 50%;
             width: 36px;
             height: 36px;
@@ -2201,7 +2241,7 @@
         let scenarioHtml = `<tr><th></th><th>${this.vehicleName1}</th>`;
         if (result2) scenarioHtml += `<th>${this.vehicleName2}</th>`;
         scenarioHtml += `</tr>`;
-        scenarioHtml += `<tr><th>Vehicle Range</th><td>${this.vehicleRange1}</td>`;
+        scenarioHtml += `<tr><th>Vehicle Range (70mph)</th><td>${this.vehicleRange1}</td>`;
         if (result2) scenarioHtml += `<td>${this.vehicleRange2}</td>`;
         scenarioHtml += `</tr>`;
         document.getElementById('scenarioTable').innerHTML = scenarioHtml;
