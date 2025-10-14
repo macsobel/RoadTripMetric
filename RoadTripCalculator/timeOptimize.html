@@ -2848,42 +2848,6 @@ const formDefaults = {
     vehicle2Index: 0
 };
 
-// Function to dynamically set HTML default values from centralized config
-//
-// This ensures that all form controls are initialized consistently from formDefaults.
-function setHtmlDefaults() {
-    // Set input default values
-    const inputMappings = {
-    'drivingDistanceSlider': formDefaults.drivingDistance,
-    'drivingDistance': formDefaults.drivingDistance,
-    'chargerSpacingSlider': formDefaults.chargerSpacing,
-    'chargerSpacing': formDefaults.chargerSpacing,
-    'chargerDetourDistanceSlider': formDefaults.chargerDetourDistance,
-    'chargerDetourDistance': formDefaults.chargerDetourDistance,
-    'startSocSlider': formDefaults.startSoc,
-    'startSoc': formDefaults.startSoc,
-    'minSocSlider': formDefaults.minSoc,
-    'minSoc': formDefaults.minSoc,
-    'endRangeRequirementSlider': formDefaults.endRangeRequirement,
-    'endRangeRequirement': formDefaults.endRangeRequirement
-    };
-    
-    // Apply default values to HTML elements
-    Object.entries(inputMappings).forEach(([id, value]) => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.setAttribute('value', value);
-            element.value = value; // Also set current value
-        }
-    });
-    
-    // Set default optimization strategy
-    const strategyRadios = document.querySelectorAll('input[name="optimizationStrategy"]');
-    strategyRadios.forEach(radio => {
-    radio.checked = (radio.value === formDefaults.optimizationStrategy);
-    });
-}
-
 // Initialize the app and DP explorer controls when the page loads
 //
 // This is the main entry point for the web application.
@@ -2908,9 +2872,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Also expose globally so code defined earlier can reference it by name
     window.highlightTotalTravelTime = highlightTotalTravelTime;
 
-    // Set HTML default values from centralized configuration
-    setHtmlDefaults();
-    
     // Reset all form values to defaults to prevent browser persistence
     resetFormToDefaults();
     
@@ -2973,7 +2934,8 @@ function resetFormToDefaults() {
     Object.entries(formElements).forEach(([id, value]) => {
         const element = document.getElementById(id);
         if (element) {
-            element.value = value;
+            element.setAttribute('value', value); // Set HTML attribute
+            element.value = value; // Set current value
         }
     });
     
