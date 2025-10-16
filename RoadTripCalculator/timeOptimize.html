@@ -1426,7 +1426,7 @@
         this.decisions = {};  // decisions[position][soc] = optimal action to take
         
     // STEP 3: Setup fractional SoC levels for precise calculations (e.g., 0.5% increments)
-        const socStep = 0.5;  // Use 0.5% increments for precision
+        const socStep = 0.5;  // Use 0.5% increments for greater precision
         const minEndSoc = this.milesToSoc(params.endRangeRequirement, this.vehicleRange);
         
     // Create array of all possible SoC levels to consider (from min to 100%)
@@ -2815,7 +2815,7 @@
  * ====================================================================================
  * 
  * This section runs when the webpage loads and sets up the application
- * Aaron, change default values here
+ * Aaron has set default values here
  */
 
 // Centralized form defaults configuration

@@ -326,7 +326,7 @@
             border: 2px solid #e2e8f0;
             border-radius: 6px;
             font-size: 0.95rem;
-            font-weight: 600;
+            font-weight: 400;
             color: #2d3a4a;
             background: white;
             margin-top: 5px;
@@ -514,7 +514,7 @@
                     </div>
                 </div>
     <style>
-        /* ...existing code... */
+
         .spinner {
             border: 4px solid #e2e8f0;
             border-top: 4px solid #3b82f6;
@@ -613,22 +613,6 @@
         </div>
     </div>
     <script>
-    // Utility to bold and green the Total Travel Time row in the results table
-    function highlightTotalTravelTime() {
-        const resultsTable = document.getElementById('resultsTable');
-        if (!resultsTable) return;
-        for (let row of resultsTable.rows) {
-            if (row.cells.length > 0 && row.cells[0].textContent.replace(/\s+/g, '').toLowerCase() === 'totaltraveltime') {
-                for (let i = 1; i < row.cells.length; i++) {
-                    row.cells[i].classList.add('total-travel-time');
-                    row.cells[i].style.fontWeight = 'bold';
-                    row.cells[i].style.color = '#1db954';
-                    row.cells[i].style.background = '#eaffea';
-                    row.cells[i].style.fontSize = '1.08em';
-                }
-            }
-        }
-    }
 /**
  * EV Road Trip Metric Calculator
  * Author: Aaron Sobel (Supported by GitHub Copilot)
@@ -2864,49 +2848,30 @@ const formDefaults = {
     vehicle2Index: 0
 };
 
-// Function to dynamically set HTML default values from centralized config
-//
-// This ensures that all form controls are initialized consistently from formDefaults.
-function setHtmlDefaults() {
-    // Set input default values
-    const inputMappings = {
-    'drivingDistanceSlider': formDefaults.drivingDistance,
-    'drivingDistance': formDefaults.drivingDistance,
-    'chargerSpacingSlider': formDefaults.chargerSpacing,
-    'chargerSpacing': formDefaults.chargerSpacing,
-    'chargerDetourDistanceSlider': formDefaults.chargerDetourDistance,
-    'chargerDetourDistance': formDefaults.chargerDetourDistance,
-    'startSocSlider': formDefaults.startSoc,
-    'startSoc': formDefaults.startSoc,
-    'minSocSlider': formDefaults.minSoc,
-    'minSoc': formDefaults.minSoc,
-    'endRangeRequirementSlider': formDefaults.endRangeRequirement,
-    'endRangeRequirement': formDefaults.endRangeRequirement
-    };
-    
-    // Apply default values to HTML elements
-    Object.entries(inputMappings).forEach(([id, value]) => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.setAttribute('value', value);
-            element.value = value; // Also set current value
-        }
-    });
-    
-    // Set default optimization strategy
-    const strategyRadios = document.querySelectorAll('input[name="optimizationStrategy"]');
-    strategyRadios.forEach(radio => {
-    radio.checked = (radio.value === formDefaults.optimizationStrategy);
-    });
-}
-
 // Initialize the app and DP explorer controls when the page loads
 //
 // This is the main entry point for the web application.
 document.addEventListener('DOMContentLoaded', () => {
-    // Set HTML default values from centralized configuration
-    setHtmlDefaults();
-    
+    // Utility to bold and green the Total Travel Time row in the results table
+    // Moved here so it's defined near where the optimizer is created and used
+    function highlightTotalTravelTime() {
+        const resultsTable = document.getElementById('resultsTable');
+        if (!resultsTable) return;
+        for (let row of resultsTable.rows) {
+            if (row.cells.length > 0 && row.cells[0].textContent.replace(/\s+/g, '').toLowerCase() === 'totaltraveltime') {
+                for (let i = 1; i < row.cells.length; i++) {
+                    row.cells[i].classList.add('total-travel-time');
+                    row.cells[i].style.fontWeight = 'bold';
+                    row.cells[i].style.color = '#1db954';
+                    row.cells[i].style.background = '#eaffea';
+                    row.cells[i].style.fontSize = '1.08em';
+                }
+            }
+        }
+    }
+    // Also expose globally so code defined earlier can reference it by name
+    window.highlightTotalTravelTime = highlightTotalTravelTime;
+
     // Reset all form values to defaults to prevent browser persistence
     resetFormToDefaults();
     
@@ -2969,7 +2934,8 @@ function resetFormToDefaults() {
     Object.entries(formElements).forEach(([id, value]) => {
         const element = document.getElementById(id);
         if (element) {
-            element.value = value;
+            element.setAttribute('value', value); // Set HTML attribute
+            element.value = value; // Set current value
         }
     });
     
